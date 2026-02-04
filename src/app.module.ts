@@ -9,7 +9,7 @@ import { BullModule } from '@nestjs/bull';
 // import { MessagingModule } from './messaging/messaging.module';
 // import { NotificationsModule } from './notifications/notifications.module';
 // import { AiClientModule } from './ai-client/ai-client.module';
-// import { PrismaModule } from './common/prisma/prisma.module';
+import { PrismaModule } from './common/prisma/prisma.module';
 
 @Module({
     imports: [
@@ -28,7 +28,7 @@ import { BullModule } from '@nestjs/bull';
         }),
 
         // Database
-        // PrismaModule,
+        PrismaModule,
 
         // Feature modules
         // AuthModule,

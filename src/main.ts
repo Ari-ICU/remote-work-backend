@@ -24,7 +24,7 @@ async function bootstrap() {
   // Swagger API documentation
   const config = new DocumentBuilder()
     .setTitle('Freelance Platform API')
-    .setDescription('AI-powered freelance platform API documentation')
+    .setDescription('AI-powered freelance platform API documentation and testing tools')
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('auth', 'Authentication endpoints')

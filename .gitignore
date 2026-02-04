@@ -1,0 +1,128 @@
+# ┌───────────────────────────────────────────────────────────────┐
+# │                     Common ignores                            │
+# └───────────────────────────────────────────────────────────────┘
+
+# OS / editors / temp files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+._*
+.vscode/
+.idea/
+*.sublime-*
+*.code-workspace
+
+# Build / dist / output folders
+dist/
+build/
+out/
+output/
+coverage/
+.nyc_output/
+.next/
+nuxt/
+.svelte-kit/
+.target/
+bin/
+obj/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Dependencies
+node_modules/
+vendor/
+bower_components/
+jspm_packages/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/install-state.gz
+
+# Logs & databases
+*.log
+*.logs
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+.envrc
+.direnv/
+
+# Testing / coverage
+coverage/
+cypress/videos/
+cypress/screenshots/
+playwright-report/
+test-results/
+htmlcov/
+
+# Package manager lockfiles you usually DON'T want to ignore:
+# package-lock.json    ← usually keep it
+# yarn.lock            ← usually keep it
+# pnpm-lock.yaml       ← usually keep it
+# bun.lockb            ← usually keep it
+
+# ┌───────────────────────────────────────────────────────────────┐
+# │               Pick only what you actually use                 │
+# └───────────────────────────────────────────────────────────────┘
+
+# ─── JavaScript / TypeScript / React / Next.js ───────────────────
+.vercel/
+.output/
+playwright/.cache/
+storybook-static/
+
+# ─── Python ──────────────────────────────────────────────────────
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.poetry/
+Pipfile.lock
+*.egg
+*.eggs/
+
+# ─── Rust ────────────────────────────────────────────────────────
+target/
+Cargo.lock    # ← comment this out if you want to commit it
+
+# ─── Go ──────────────────────────────────────────────────────────
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# ─── Java / Gradle / Maven ───────────────────────────────────────
+*.class
+*.jar
+*.war
+*.ear
+target/
+.mvn/
+mvnw
+mvnw.cmd
+.gradle/
+
+# ─── Docker ──────────────────────────────────────────────────────
+*.dockerignore   # ← sometimes people want this ignored
+docker-compose.override.yml
+
+# ─── Misc tools ──────────────────────────────────────────────────
+*.bak
+*.backup
+*.tmp
+*.TMP
+*.swp
+*.swo

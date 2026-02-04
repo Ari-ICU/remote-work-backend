@@ -10,6 +10,10 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const bull_1 = require("@nestjs/bull");
+const auth_module_1 = require("./auth/auth.module");
+const users_module_1 = require("./users/users.module");
+const jobs_module_1 = require("./jobs/jobs.module");
+const prisma_module_1 = require("./common/prisma/prisma.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -26,6 +30,10 @@ exports.AppModule = AppModule = __decorate([
                     port: parseInt(process.env.REDIS_PORT) || 6379,
                 },
             }),
+            prisma_module_1.PrismaModule,
+            auth_module_1.AuthModule,
+            users_module_1.UsersModule,
+            jobs_module_1.JobsModule,
         ],
     })
 ], AppModule);

@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateJobDto } from './dto/create-job.dto';
+import { UpdateJobDto } from './dto/update-job.dto';
 
 @Injectable()
 export class JobsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(userId: string, data: CreateJobDto) {
     return this.prisma.job.create({
@@ -15,7 +16,67 @@ export class JobsService {
   async findAll() {
     return this.prisma.job.findMany({
       where: { status: 'OPEN' },
-      include: { poster: { select: { firstName: true, lastName: true } } },
+      include: {
+        poster: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true
+          }
+        },
+        _count: {
+          select: { applications: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async findOne(id: string) {
+    return this.prisma.job.findUnique({
+      where: { id },
+      include: {
+        poster: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+            bio: true,
+            location: true,
+            createdAt: true
+          }
+        },
+        applications: {
+          select: { id: true, status: true, applicantId: true }
+        }
+      }
+    });
+  }
+
+  async update(id: string, data: UpdateJobDto, userId: string) {
+    // Check ownership
+    const job = await this.prisma.job.findUnique({ where: { id } });
+    if (!job || job.posterId !== userId) {
+      throw new Error('Job not found or unauthorized');
+    }
+
+    return this.prisma.job.update({
+      where: { id },
+      data
+    });
+  }
+
+  async remove(id: string, userId: string) {
+    // Check ownership
+    const job = await this.prisma.job.findUnique({ where: { id } });
+    if (!job || job.posterId !== userId) {
+      throw new Error('Job not found or unauthorized');
+    }
+
+    return this.prisma.job.delete({
+      where: { id }
     });
   }
 }

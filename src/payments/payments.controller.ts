@@ -1,5 +1,6 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
+import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -12,7 +13,7 @@ export class PaymentsController {
     @ApiBearerAuth()
     @Post('create-intent')
     @ApiOperation({ summary: 'Create payment intent' })
-    createPaymentIntent(@Body() amount: number) {
-        return this.paymentsService.createPaymentIntent(amount);
+    createPaymentIntent(@Body() createPaymentIntentDto: CreatePaymentIntentDto) {
+        return this.paymentsService.createPaymentIntent(createPaymentIntentDto);
     }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request, Patch, Param } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -12,7 +12,15 @@ export class NotificationsController {
     @ApiBearerAuth()
     @Get()
     @ApiOperation({ summary: 'Get user notifications' })
-    findAll() {
-        return this.notificationsService.findAll();
+    findAll(@Request() req) {
+        return this.notificationsService.findAll(req.user.id);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @Patch(':id/read')
+    @ApiOperation({ summary: 'Mark notification as read' })
+    markAsRead(@Param('id') id: string) {
+        return this.notificationsService.markAsRead(id);
     }
 }

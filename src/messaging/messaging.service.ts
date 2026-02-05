@@ -16,17 +16,6 @@ export class MessagingService {
     }
 
     async getConversations(userId: string) {
-        // Group messages by other user.
-        // This is complex in Prisma. Simplified: Get all messages involving user, then distinct by other party.
-        // For efficiency in this "complete backend" task without huge custom SQL:
-        // Fetch recent messages involving user.
-        // Ideally we'd have a Conversation model.
-        // I'll return a flat list of recent messages for now as a "Recent Chats" list replacement
-        // OR distinct logic.
-
-        // Simpler approach: find users who have exchanged messages with current user?
-        // Let's just return all messages for now or a mock list of "conversations" derived from unique sender/receivers.
-
         const messages = await this.prisma.message.findMany({
             where: {
                 OR: [{ senderId: userId }, { receiverId: userId }]
@@ -35,12 +24,27 @@ export class MessagingService {
                 sender: { select: { id: true, firstName: true, lastName: true, avatar: true } },
                 receiver: { select: { id: true, firstName: true, lastName: true, avatar: true } }
             },
-            orderBy: { createdAt: 'desc' },
-            take: 50
+            orderBy: { createdAt: 'desc' }
         });
 
-        // Client-side grouping (or here) is acceptable for MVP
-        return messages;
+        const conversationMap = new Map();
+
+        for (const msg of messages) {
+            const otherUser = msg.senderId === userId ? msg.receiver : msg.sender;
+            if (!conversationMap.has(otherUser.id)) {
+                conversationMap.set(otherUser.id, {
+                    otherUser,
+                    lastMessage: {
+                        content: msg.content,
+                        createdAt: msg.createdAt,
+                        read: msg.read,
+                        senderId: msg.senderId // Useful for knowing if "You: " sent it
+                    }
+                });
+            }
+        }
+
+        return Array.from(conversationMap.values());
     }
 
     async getMessages(userId: string, otherUserId: string) {

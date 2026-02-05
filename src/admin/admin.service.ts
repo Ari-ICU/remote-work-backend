@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { UserRole, JobStatus, ApplicationStatus } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AdminService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService
+    ) { }
 
     async getStats() {
         const [totalUsers, totalJobs, totalApplications, totalPayments] = await Promise.all([
@@ -78,10 +82,17 @@ export class AdminService {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new NotFoundException('User not found');
 
-        return this.prisma.user.update({
+        const updatedUser = await this.prisma.user.update({
             where: { id: userId },
             data: { role },
         });
+
+        await this.notificationsService.create(userId, {
+            message: `Your account role has been upgraded to ${role} by the System Administrator.`,
+            type: 'SYSTEM'
+        });
+
+        return updatedUser;
     }
 
     async getAllJobs(page = 1, limit = 10) {
@@ -117,10 +128,17 @@ export class AdminService {
         const job = await this.prisma.job.findUnique({ where: { id: jobId } });
         if (!job) throw new NotFoundException('Job not found');
 
-        return this.prisma.job.update({
+        const updatedJob = await this.prisma.job.update({
             where: { id: jobId },
             data: { status },
         });
+
+        await this.notificationsService.create(job.posterId, {
+            message: `The mission "${job.title}" status has been modified to ${status}.`,
+            type: 'JOB'
+        });
+
+        return updatedJob;
     }
 
     async deleteUser(userId: string) {

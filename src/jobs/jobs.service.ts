@@ -128,4 +128,16 @@ export class JobsService {
       where: { id }
     });
   }
+
+  async getMyJobs(userId: string) {
+    return this.prisma.job.findMany({
+      where: { posterId: userId },
+      include: {
+        _count: {
+          select: { applications: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 }

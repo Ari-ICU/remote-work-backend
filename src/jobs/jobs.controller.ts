@@ -30,6 +30,14 @@ export class JobsController {
     return this.jobsService.getFeaturedCompanies();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('my-jobs')
+  @ApiOperation({ summary: 'List jobs posted by current user' })
+  getMyJobs(@Request() req) {
+    return this.jobsService.getMyJobs(req.user.id);
+  }
+
   @Get()
   @ApiOperation({ summary: 'List all open jobs' })
   findAll() {

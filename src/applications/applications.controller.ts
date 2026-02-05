@@ -19,6 +19,14 @@ export class ApplicationsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @Get('me')
+  @ApiOperation({ summary: 'Get current users applications' })
+  getMyApplications(@Request() req) {
+    return this.applicationsService.getMyApplications(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @Get('job/:jobId')
   @ApiOperation({ summary: 'Get all applications for a specific job' })
   getForJob(@Param('jobId') jobId: string, @Request() req) {

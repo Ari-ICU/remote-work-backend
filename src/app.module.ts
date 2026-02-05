@@ -4,11 +4,11 @@ import { BullModule } from '@nestjs/bull';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { JobsModule } from './jobs/jobs.module';
-// import { ApplicationsModule } from './applications/applications.module';
-// import { PaymentsModule } from './payments/payments.module';
-// import { MessagingModule } from './messaging/messaging.module';
-// import { NotificationsModule } from './notifications/notifications.module';
-// import { AiClientModule } from './ai-client/ai-client.module';
+import { ApplicationsModule } from './applications/applications.module';
+import { PaymentsModule } from './payments/payments.module';
+import { MessagingModule } from './messaging/messaging.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { AiClientModule } from './ai-client/ai-client.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 
 @Module({
@@ -34,11 +34,11 @@ import { PrismaModule } from './common/prisma/prisma.module';
         AuthModule,
         UsersModule,
         JobsModule,
-        // ApplicationsModule,
-        // PaymentsModule,
-        // MessagingModule,
-        // NotificationsModule,
-        // AiClientModule,
+        ApplicationsModule,
+        PaymentsModule,
+        MessagingModule,
+        NotificationsModule,
+        AiClientModule,
     ],
 })
 export class AppModule { }

@@ -13,6 +13,11 @@ const bull_1 = require("@nestjs/bull");
 const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
 const jobs_module_1 = require("./jobs/jobs.module");
+const applications_module_1 = require("./applications/applications.module");
+const payments_module_1 = require("./payments/payments.module");
+const messaging_module_1 = require("./messaging/messaging.module");
+const notifications_module_1 = require("./notifications/notifications.module");
+const ai_client_module_1 = require("./ai-client/ai-client.module");
 const prisma_module_1 = require("./common/prisma/prisma.module");
 let AppModule = class AppModule {
 };
@@ -34,6 +39,11 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             jobs_module_1.JobsModule,
+            applications_module_1.ApplicationsModule,
+            payments_module_1.PaymentsModule,
+            messaging_module_1.MessagingModule,
+            notifications_module_1.NotificationsModule,
+            ai_client_module_1.AiClientModule,
         ],
     })
 ], AppModule);

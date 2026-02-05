@@ -11,6 +11,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AiClientModule } from './ai-client/ai-client.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { AdminModule } from './admin/admin.module';
 import { join } from 'path';
 
 @Module({
@@ -45,6 +46,7 @@ import { join } from 'path';
         MessagingModule,
         NotificationsModule,
         AiClientModule,
+        AdminModule,
     ],
 })
 export class AppModule { }

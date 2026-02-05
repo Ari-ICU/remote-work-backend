@@ -43,6 +43,32 @@ async function main() {
   });
 
   // ────────────────────────────────────────────────
+  // Create admin account
+  // ────────────────────────────────────────────────
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@khmerwork.com' },
+    update: {
+      password: hashedPassword,
+      role: UserRole.ADMIN,
+    },
+    create: {
+      email: 'admin@khmerwork.com',
+      password: hashedPassword,
+      firstName: 'System',
+      lastName: 'Admin',
+      role: UserRole.ADMIN,
+      bio: 'Platform administrator.',
+      location: 'Phnom Penh, Cambodia',
+    },
+  });
+
+  console.log('Admin created:', {
+    id: admin.id,
+    email: admin.email,
+    role: admin.role,
+  });
+
+  // ────────────────────────────────────────────────
   // Create sample jobs
   // ────────────────────────────────────────────────
   const job1 = await prisma.job.create({

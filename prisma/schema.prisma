@@ -30,6 +30,7 @@ model User {
   payments         Payment[]
   reviews          Review[]      @relation("ReviewReceiver")
   givenReviews     Review[]      @relation("ReviewGiver")
+  notifications    Notification[]
 
   @@map("users")
 }
@@ -126,6 +127,19 @@ model Review {
   @@index([reviewerId])
   @@index([revieweeId])
   @@map("reviews")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  type      String   @default("SYSTEM") // SYSTEM, JOB, PAYMENT, MESSAGE
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
 }
 
 enum UserRole {

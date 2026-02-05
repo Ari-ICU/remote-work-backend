@@ -6,4 +6,4 @@ import { JobsController } from './jobs.controller';
   controllers: [JobsController],
   providers: [JobsService],
 })
-export class JobsModule {}
+export class JobsModule { }

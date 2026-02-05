@@ -33,6 +33,23 @@ export class JobsService {
     });
   }
 
+  async getCategories() {
+    const categories = await this.prisma.job.groupBy({
+      by: ['category'],
+      _count: {
+        id: true,
+      },
+      where: {
+        status: 'OPEN',
+      },
+    });
+
+    return categories.map((cat) => ({
+      name: cat.category,
+      count: cat._count.id,
+    }));
+  }
+
   async findOne(id: string) {
     return this.prisma.job.findUnique({
       where: { id },

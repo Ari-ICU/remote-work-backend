@@ -18,6 +18,12 @@ export class JobsController {
     return this.jobsService.create(req.user.id, createJobDto);
   }
 
+  @Get('categories')
+  @ApiOperation({ summary: 'Get job categories with counts' })
+  getCategories() {
+    return this.jobsService.getCategories();
+  }
+
   @Get()
   @ApiOperation({ summary: 'List all open jobs' })
   findAll() {

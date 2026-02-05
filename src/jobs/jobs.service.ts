@@ -50,6 +50,38 @@ export class JobsService {
     }));
   }
 
+  async getFeaturedCompanies() {
+    const employers = await this.prisma.user.findMany({
+      where: {
+        role: 'EMPLOYER',
+        jobsPosted: {
+          some: { status: 'OPEN' }
+        }
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        _count: {
+          select: {
+            jobsPosted: {
+              where: { status: 'OPEN' }
+            }
+          }
+        }
+      },
+      take: 6,
+    });
+
+    return employers.map(emp => ({
+      name: `${emp.firstName} ${emp.lastName}`,
+      jobsCount: emp._count.jobsPosted,
+      logo: emp.firstName.substring(0, 1) + emp.lastName.substring(0, 1),
+      avatar: emp.avatar
+    }));
+  }
+
   async findOne(id: string) {
     return this.prisma.job.findUnique({
       where: { id },

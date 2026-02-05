@@ -34,4 +34,17 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   bio?: string;
+
+  @ApiProperty({ required: false, example: 'Phnom Penh, Cambodia' })
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @ApiProperty({ required: false, example: ['React', 'Node.js'] })
+  @IsOptional()
+  skills?: string[];
+
+  @ApiProperty({ required: false, example: 25.0 })
+  @IsOptional()
+  hourlyRate?: number;
 }

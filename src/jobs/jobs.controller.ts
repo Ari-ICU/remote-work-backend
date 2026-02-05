@@ -24,6 +24,12 @@ export class JobsController {
     return this.jobsService.getCategories();
   }
 
+  @Get('companies')
+  @ApiOperation({ summary: 'Get featured companies with open job counts' })
+  getFeaturedCompanies() {
+    return this.jobsService.getFeaturedCompanies();
+  }
+
   @Get()
   @ApiOperation({ summary: 'List all open jobs' })
   findAll() {

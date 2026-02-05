@@ -10,9 +10,15 @@ import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AiClientModule } from './ai-client/ai-client.module';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
     imports: [
+        ServeStaticModule.forRoot({
+            rootPath: join(process.cwd(), 'public'),
+            serveRoot: '/public',
+        }),
         // Configuration
         ConfigModule.forRoot({
             isGlobal: true,

@@ -33,4 +33,25 @@ export class AuthService {
       }
     };
   }
+
+  async validateOAuthUser(profile: any) {
+    const { email, firstName, lastName, picture } = profile;
+
+    let user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          firstName,
+          lastName,
+          avatar: picture,
+          password: '', // OAuth users don't have a password
+          role: 'FREELANCER', // Default role
+        },
+      });
+    }
+
+    return user;
+  }
 }

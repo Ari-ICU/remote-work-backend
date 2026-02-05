@@ -5,6 +5,7 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UsersService } from '../users/users.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { GithubAuthGuard } from './guards/github-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -42,6 +43,25 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth2 callback' })
   async googleAuthRedirect(@Req() req, @Res() res) {
+    const user = await this.authService.validateOAuthUser(req.user);
+    const authData = await this.authService.login(user);
+
+    // Redirect to frontend with token and user data
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const redirectUrl = `${frontendUrl}/auth/callback?token=${authData.accessToken}&user=${encodeURIComponent(JSON.stringify(authData.user))}`;
+
+    return res.redirect(redirectUrl);
+  }
+
+  @Get('github')
+  @UseGuards(GithubAuthGuard)
+  @ApiOperation({ summary: 'Init GitHub OAuth2 login' })
+  async githubAuth(@Req() req) { }
+
+  @Get('github/callback')
+  @UseGuards(GithubAuthGuard)
+  @ApiOperation({ summary: 'GitHub OAuth2 callback' })
+  async githubAuthRedirect(@Req() req, @Res() res) {
     const user = await this.authService.validateOAuthUser(req.user);
     const authData = await this.authService.login(user);
 

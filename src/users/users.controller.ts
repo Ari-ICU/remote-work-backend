@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards, Request, Patch, Body, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Request, Patch, Body, Post, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -68,7 +68,8 @@ export class UsersController {
   async uploadAvatar(@Request() req: any, @UploadedFile() file: any) {
     if (!file) {
       console.error('No file uploaded in request');
-      return { message: 'No file uploaded' };
+      console.log('Request headers:', req.headers);
+      throw new BadRequestException('No file uploaded');
     }
     console.log(`Avatar uploaded: ${file.filename} for user ${req.user.id}`);
     const avatarUrl = `/public/uploads/${file.filename}`;

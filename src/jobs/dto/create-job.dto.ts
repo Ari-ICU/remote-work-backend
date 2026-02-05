@@ -22,4 +22,10 @@ export class CreateJobDto {
 
   @ApiProperty({ required: false, default: true })
   @IsBoolean() @IsOptional() remote?: boolean;
+
+  @ApiProperty({ example: ['Design UI components', 'Write documentation'], required: false })
+  @IsArray() @IsString({ each: true }) @IsOptional() responsibilities?: string[];
+
+  @ApiProperty({ example: ['3+ years React experience', 'CS degree'], required: false })
+  @IsArray() @IsString({ each: true }) @IsOptional() requirements?: string[];
 }

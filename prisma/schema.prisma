@@ -46,9 +46,11 @@ model Job {
   status       JobStatus     @default(DRAFT)
   location     String?
   remote       Boolean       @default(true)
-  aiMatchScore Float?
-  aiTags       String[]
-  posterId     String
+  aiMatchScore   Float?
+  aiTags         String[]
+  responsibilities String[]      @default([])
+  requirements     String[]      @default([])
+  posterId       String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   applications Application[]

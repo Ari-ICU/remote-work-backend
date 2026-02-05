@@ -4,6 +4,16 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
+    console.log('Cleaning up database...');
+    // Delete in order to respect foreign key constraints
+    await prisma.application.deleteMany();
+    await prisma.message.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.review.deleteMany();
+    await prisma.job.deleteMany();
+    await prisma.user.deleteMany();
+    console.log('Database cleaned.');
+
     // Create an employer
     const hashedPassword = await bcrypt.hash('password123', 10);
     const employer = await prisma.user.upsert({
@@ -33,6 +43,18 @@ async function main() {
             budgetType: 'FIXED',
             status: JobStatus.OPEN,
             location: 'Phnom Penh (Remote)',
+            responsibilities: [
+                'Develop and maintain high-quality React components using Next.js',
+                'Implement responsive designs with Tailwind CSS',
+                'Collaborate with backend engineers to integrate APIs',
+                'Optimize web applications for maximum speed and scalability'
+            ],
+            requirements: [
+                '3+ years of professional experience with React and modern frontend stacks',
+                'Strong proficiency in TypeScript and Next.js (App Router)',
+                'Expert knowledge of Tailwind CSS and flexible layouts',
+                'Experience with RESTful and GraphQL APIs'
+            ],
             posterId: employer.id,
         },
     });

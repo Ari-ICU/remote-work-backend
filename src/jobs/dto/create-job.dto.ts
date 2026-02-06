@@ -28,4 +28,10 @@ export class CreateJobDto {
 
   @ApiProperty({ example: ['3+ years React experience', 'CS degree'], required: false })
   @IsArray() @IsString({ each: true }) @IsOptional() requirements?: string[];
+
+  @ApiProperty({ example: 'TechCorp Solutions', required: false })
+  @IsString() @IsOptional() companyName?: string;
+
+  @ApiProperty({ example: 'Remote', required: false })
+  @IsString() @IsOptional() location?: string;
 }

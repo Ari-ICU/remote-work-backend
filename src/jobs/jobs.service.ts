@@ -9,7 +9,7 @@ export class JobsService {
 
   async create(userId: string, data: CreateJobDto) {
     return this.prisma.job.create({
-      data: { ...data, posterId: userId },
+      data: { ...data, posterId: userId, status: 'OPEN' },
     });
   }
 

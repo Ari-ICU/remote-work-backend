@@ -12,18 +12,18 @@ import { extname, join } from 'path';
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get user profile by ID' })
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
-  }
-
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get('profile/me')
   @ApiOperation({ summary: 'Get current logged-in user profile' })
   getProfile(@Request() req) {
     return this.usersService.findOne(req.user.id);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get user profile by ID' })
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOne(id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -74,5 +74,44 @@ export class UsersController {
     console.log(`Avatar uploaded: ${file.filename} for user ${req.user.id}`);
     const avatarUrl = `/public/uploads/${file.filename}`;
     return this.usersService.update(req.user.id, { avatar: avatarUrl });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('resume')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: join(process.cwd(), 'public/uploads'),
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, `resume-${uniqueSuffix}${extname(file.originalname)}`);
+      },
+    }),
+    fileFilter: (req, file, cb) => {
+      if (!file.originalname.match(/\.(pdf|doc|docx)$/)) {
+        return cb(new Error('Only PDF and Word documents are allowed!'), false);
+      }
+      cb(null, true);
+    },
+  }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiOperation({ summary: 'Upload user resume' })
+  async uploadResume(@Request() req: any, @UploadedFile() file: any) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    const resumeUrl = `/public/uploads/${file.filename}`;
+    return this.usersService.update(req.user.id, { resumeUrl: resumeUrl });
   }
 }

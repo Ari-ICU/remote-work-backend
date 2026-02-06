@@ -67,4 +67,24 @@ export class CreateUserDto {
   @ApiProperty({ required: false, example: 25.0 })
   @IsOptional()
   hourlyRate?: number;
+
+  @ApiProperty({ required: false, example: ['English', 'Khmer'] })
+  @IsOptional()
+  languages?: string[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  education?: any;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  experience?: any;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  resumeUrl?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  resumeTemplate?: string;
 }

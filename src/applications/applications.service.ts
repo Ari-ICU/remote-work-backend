@@ -64,7 +64,7 @@ export class ApplicationsService {
             id: true,
             title: true,
             status: true,
-            // 'company' is not in Job model, using poster name instead
+            companyName: true,
             poster: {
               select: { firstName: true, lastName: true }
             }

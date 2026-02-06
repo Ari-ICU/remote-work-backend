@@ -34,6 +34,11 @@ model User {
   payments         Payment[]
   reviews          Review[]      @relation("ReviewReceiver")
   givenReviews     Review[]      @relation("ReviewGiver")
+  languages        String[]      @default([])
+  education        Json?
+  experience       Json?
+  resumeUrl        String?
+  resumeTemplate   String?
   notifications    Notification[]
 
   @@map("users")
@@ -56,6 +61,7 @@ model Job {
   responsibilities String[]      @default([])
   requirements     String[]      @default([])
   posterId       String
+  companyName    String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   applications Application[]

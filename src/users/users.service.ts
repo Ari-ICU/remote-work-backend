@@ -46,6 +46,11 @@ export class UsersService {
       location: true,
       skills: true,
       hourlyRate: true,
+      languages: true,
+      education: true,
+      experience: true,
+      resumeUrl: true,
+      resumeTemplate: true,
       verified: true,
       createdAt: true,
     };

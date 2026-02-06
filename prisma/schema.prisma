@@ -20,6 +20,10 @@ model User {
   skills           String[]
   hourlyRate       Float?
   location         String?
+  headline         String?
+  website          String?
+  github           String?
+  linkedin         String?
   verified         Boolean       @default(false)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt

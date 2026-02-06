@@ -15,15 +15,40 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(data.password, 10);
     return this.prisma.user.create({
       data: { ...data, password: hashedPassword },
-      select: { id: true, email: true, firstName: true, role: true },
+      select: this.userSelect,
     });
   }
 
   async findOne(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      include: { reviews: true, jobsPosted: true }
+      select: {
+        ...this.userSelect,
+        reviews: true,
+        jobsPosted: true,
+      },
     });
+  }
+
+  private get userSelect() {
+    return {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      avatar: true,
+      bio: true,
+      headline: true,
+      website: true,
+      github: true,
+      linkedin: true,
+      location: true,
+      skills: true,
+      hourlyRate: true,
+      verified: true,
+      createdAt: true,
+    };
   }
 
   async update(id: string, data: UpdateUserDto) {
@@ -33,20 +58,7 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id },
       data,
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        avatar: true,
-        bio: true,
-        location: true,
-        skills: true,
-        hourlyRate: true,
-        verified: true,
-        createdAt: true
-      }
+      select: this.userSelect
     });
   }
 }

@@ -40,6 +40,26 @@ export class CreateUserDto {
   @IsOptional()
   location?: string;
 
+  @ApiProperty({ required: false, example: 'Senior Developer' })
+  @IsString()
+  @IsOptional()
+  headline?: string;
+
+  @ApiProperty({ required: false, example: 'https://mysite.com' })
+  @IsString()
+  @IsOptional()
+  website?: string;
+
+  @ApiProperty({ required: false, example: 'github_user' })
+  @IsString()
+  @IsOptional()
+  github?: string;
+
+  @ApiProperty({ required: false, example: 'linkedin_user' })
+  @IsString()
+  @IsOptional()
+  linkedin?: string;
+
   @ApiProperty({ required: false, example: ['React', 'Node.js'] })
   @IsOptional()
   skills?: string[];

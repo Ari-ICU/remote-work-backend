@@ -36,7 +36,15 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        avatar: user.avatar
+        avatar: user.avatar,
+        bio: user.bio,
+        headline: user.headline,
+        website: user.website,
+        github: user.github,
+        linkedin: user.linkedin,
+        location: user.location,
+        skills: user.skills,
+        hourlyRate: user.hourlyRate,
       }
     };
   }

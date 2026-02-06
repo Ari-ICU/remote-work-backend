@@ -75,6 +75,7 @@ export class JobsService {
     });
 
     return employers.map(emp => ({
+      id: emp.id,
       name: `${emp.firstName} ${emp.lastName}`,
       jobsCount: emp._count.jobsPosted,
       logo: emp.firstName.substring(0, 1) + emp.lastName.substring(0, 1),

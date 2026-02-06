@@ -35,8 +35,9 @@ export class AdminController {
     getAllUsers(
         @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
         @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+        @Query('search') search?: string,
     ) {
-        return this.adminService.getAllUsers(page, limit);
+        return this.adminService.getAllUsers(page, limit, search);
     }
 
     @Patch('users/:id/role')
@@ -56,13 +57,59 @@ export class AdminController {
     getAllJobs(
         @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
         @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+        @Query('search') search?: string,
     ) {
-        return this.adminService.getAllJobs(page, limit);
+        return this.adminService.getAllJobs(page, limit, search);
     }
 
     @Patch('jobs/:id/status')
     @ApiOperation({ summary: 'Update job status' })
     updateJobStatus(@Param('id') id: string, @Body('status') status: JobStatus) {
         return this.adminService.updateJobStatus(id, status);
+    }
+
+    @Get('applications')
+    @ApiOperation({ summary: 'Get all applications with pagination' })
+    getAllApplications(
+        @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+    ) {
+        return this.adminService.getAllApplications(page, limit);
+    }
+
+    @Patch('applications/:id/status')
+    @ApiOperation({ summary: 'Update application status' })
+    updateApplicationStatus(@Param('id') id: string, @Body('status') status: any) {
+        return this.adminService.updateApplicationStatus(id, status);
+    }
+
+    @Get('payments')
+    @ApiOperation({ summary: 'Get all payments with pagination' })
+    getAllPayments(
+        @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+    ) {
+        return this.adminService.getAllPayments(page, limit);
+    }
+
+    @Get('reviews')
+    @ApiOperation({ summary: 'Get all reviews' })
+    getAllReviews(
+        @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+    ) {
+        return this.adminService.getAllReviews(page, limit);
+    }
+
+    @Delete('reviews/:id')
+    @ApiOperation({ summary: 'Delete a review' })
+    deleteReview(@Param('id') id: string) {
+        return this.adminService.deleteReview(id);
+    }
+
+    @Delete('cleanup-test-data')
+    @ApiOperation({ summary: 'Remove all Playwright test data' })
+    cleanupTestData() {
+        return this.adminService.cleanupTestData();
     }
 }

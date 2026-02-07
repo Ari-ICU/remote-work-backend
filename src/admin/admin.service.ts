@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { UserRole, JobStatus, ApplicationStatus } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminService {
@@ -297,6 +298,83 @@ export class AdminService {
         if (!user) throw new NotFoundException('User not found');
 
         return this.prisma.user.delete({ where: { id: userId } });
+    }
+
+    async search(query: string) {
+        if (!query) return { users: [], jobs: [] };
+
+        const [users, jobs] = await Promise.all([
+            this.prisma.user.findMany({
+                where: {
+                    OR: [
+                        { email: { contains: query, mode: 'insensitive' } },
+                        { firstName: { contains: query, mode: 'insensitive' } },
+                        { lastName: { contains: query, mode: 'insensitive' } },
+                    ]
+                },
+                take: 5,
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    avatar: true,
+                    role: true
+                }
+            }),
+            this.prisma.job.findMany({
+                where: {
+                    OR: [
+                        { title: { contains: query, mode: 'insensitive' } },
+                        { companyName: { contains: query, mode: 'insensitive' } },
+                        { description: { contains: query, mode: 'insensitive' } },
+                    ]
+                },
+                take: 5,
+                select: {
+                    id: true,
+                    title: true,
+                    companyName: true,
+                    status: true
+                }
+            })
+        ]);
+
+        return { users, jobs };
+    }
+
+    async createUser(data: any) {
+        const existingUser = await this.prisma.user.findUnique({
+            where: { email: data.email },
+        });
+
+        if (existingUser) {
+            throw new ConflictException('User with this email already exists');
+        }
+
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        return this.prisma.user.create({
+            data: {
+                ...data,
+                password: hashedPassword,
+            },
+        });
+    }
+
+    async updateUser(userId: string, data: any) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        if (data.password) {
+            data.password = await bcrypt.hash(data.password, 10);
+        } else {
+            delete data.password;
+        }
+
+        return this.prisma.user.update({
+            where: { id: userId },
+            data,
+        });
     }
 
     async cleanupTestData() {

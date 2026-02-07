@@ -8,6 +8,7 @@ import {
     UseGuards,
     Query,
     ParseIntPipe,
+    Post,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -15,6 +16,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole, JobStatus } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { UpdateUserDto } from '../users/dto/update-user.dto';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -30,6 +33,12 @@ export class AdminController {
         return this.adminService.getStats();
     }
 
+    @Get('search')
+    @ApiOperation({ summary: 'Global admin search' })
+    search(@Query('q') query: string) {
+        return this.adminService.search(query);
+    }
+
     @Get('users')
     @ApiOperation({ summary: 'Get all users with pagination' })
     getAllUsers(
@@ -38,6 +47,18 @@ export class AdminController {
         @Query('search') search?: string,
     ) {
         return this.adminService.getAllUsers(page, limit, search);
+    }
+
+    @Post('users')
+    @ApiOperation({ summary: 'Create a new user' })
+    createUser(@Body() createUserDto: CreateUserDto) {
+        return this.adminService.createUser(createUserDto);
+    }
+
+    @Patch('users/:id')
+    @ApiOperation({ summary: 'Update user details' })
+    updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+        return this.adminService.updateUser(id, updateUserDto);
     }
 
     @Patch('users/:id/role')

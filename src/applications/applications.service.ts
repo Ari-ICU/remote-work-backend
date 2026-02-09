@@ -23,6 +23,12 @@ export class ApplicationsService {
       throw new Error('You have already applied to this job');
     }
 
+    // Check if job is still open
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job || job.status !== 'OPEN') {
+      throw new Error('This job is no longer accepting applications');
+    }
+
     const application = await this.prisma.application.create({
       data: {
         ...data,
@@ -73,5 +79,76 @@ export class ApplicationsService {
       },
       orderBy: { createdAt: 'desc' }
     });
+  }
+
+  async acceptApplication(applicationId: string, employerId: string) {
+    // Get application with job details
+    const application = await this.prisma.application.findUnique({
+      where: { id: applicationId },
+      include: { job: true, applicant: true }
+    });
+
+    if (!application) {
+      throw new Error('Application not found');
+    }
+
+    // Verify employer owns the job
+    if (application.job.posterId !== employerId) {
+      throw new Error('Access denied');
+    }
+
+    // Update application status to ACCEPTED
+    const updatedApplication = await this.prisma.application.update({
+      where: { id: applicationId },
+      data: { status: 'ACCEPTED' }
+    });
+
+    // Auto-close job by marking it as IN_PROGRESS and setting hired freelancer
+    await this.prisma.job.update({
+      where: { id: application.jobId },
+      data: {
+        status: 'IN_PROGRESS',
+        hiredFreelancerId: application.applicantId
+      }
+    });
+
+    // Notify the freelancer
+    await this.notificationsService.create(application.applicantId, {
+      message: `Congratulations! Your application for "${application.job.title}" has been accepted.`,
+      type: 'JOB'
+    });
+
+    return updatedApplication;
+  }
+
+  async rejectApplication(applicationId: string, employerId: string) {
+    // Get application with job details
+    const application = await this.prisma.application.findUnique({
+      where: { id: applicationId },
+      include: { job: true }
+    });
+
+    if (!application) {
+      throw new Error('Application not found');
+    }
+
+    // Verify employer owns the job
+    if (application.job.posterId !== employerId) {
+      throw new Error('Access denied');
+    }
+
+    // Update application status to REJECTED
+    const updatedApplication = await this.prisma.application.update({
+      where: { id: applicationId },
+      data: { status: 'REJECTED' }
+    });
+
+    // Notify the freelancer
+    await this.notificationsService.create(application.applicantId, {
+      message: `Your application for "${application.job.title}" was not selected this time.`,
+      type: 'JOB'
+    });
+
+    return updatedApplication;
   }
 }

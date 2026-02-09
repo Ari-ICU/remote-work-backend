@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -12,6 +12,8 @@ import { AiClientModule } from './ai-client/ai-client.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { AdminModule } from './admin/admin.module';
+import { PricingModule } from './pricing/pricing.module';
+import { SalaryGuideModule } from './salary-guide/salary-guide.module';
 import { join } from 'path';
 
 @Module({
@@ -27,11 +29,14 @@ import { join } from 'path';
         }),
 
         // Bull Queue for background jobs
-        BullModule.forRoot({
-            redis: {
-                host: process.env.REDIS_HOST || 'localhost',
-                port: parseInt(process.env.REDIS_PORT) || 6379,
-            },
+        BullModule.forRootAsync({
+            inject: [ConfigService],
+            useFactory: (configService: ConfigService) => ({
+                redis: {
+                    host: configService.get('REDIS_HOST') || 'localhost',
+                    port: parseInt(configService.get('REDIS_PORT')) || 6379,
+                },
+            }),
         }),
 
         // Database
@@ -47,6 +52,8 @@ import { join } from 'path';
         NotificationsModule,
         AiClientModule,
         AdminModule,
+        PricingModule,
+        SalaryGuideModule,
     ],
 })
 export class AppModule { }

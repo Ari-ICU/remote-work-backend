@@ -10,4 +10,10 @@ export class CreatePaymentIntentDto {
     @IsString()
     @IsOptional()
     currency?: string;
+
+    @ApiProperty({ example: 'CARD', description: 'Payment provider: PAYPAL, CARD, or KHQR', default: 'CARD', required: false })
+    @IsString()
+    @IsOptional()
+    provider?: string;
 }
+

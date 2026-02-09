@@ -65,4 +65,20 @@ export class JobsController {
   remove(@Param('id') id: string, @Request() req) {
     return this.jobsService.remove(id, req.user.id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(':id/hire/:freelancerId')
+  @ApiOperation({ summary: 'Hire a freelancer and close job to new applications' })
+  hireFreelancer(@Param('id') id: string, @Param('freelancerId') freelancerId: string, @Request() req) {
+    return this.jobsService.hireFreelancer(id, freelancerId, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(':id/complete')
+  @ApiOperation({ summary: 'Mark job as completed' })
+  completeJob(@Param('id') id: string, @Request() req) {
+    return this.jobsService.completeJob(id, req.user.id);
+  }
 }

@@ -40,6 +40,9 @@ model User {
   resumeUrl        String?
   resumeTemplate   String?
   notifications    Notification[]
+  paymentProvider  String?       // Payment provider: PAYPAL, CARD, KHQR
+  paymentProviderId String?      // Provider-specific customer/account ID
+  hasPaymentMethod Boolean       @default(false) // Whether user has connected payment method
 
   @@map("users")
 }
@@ -62,6 +65,9 @@ model Job {
   requirements     String[]      @default([])
   posterId       String
   companyName    String?
+  hiredFreelancerId String?      // ID of hired freelancer (when job is filled)
+  paymentRequired   Boolean      @default(true) // Whether payment is required to post
+  featured          Boolean      @default(false) // Whether job is promoted/featured
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   applications Application[]
@@ -117,8 +123,11 @@ model Payment {
   amount          Float
   currency        String        @default("usd")
   status          PaymentStatus @default(PENDING)
-  stripePaymentId String?       @unique
+  provider        String        @default("CARD") // PAYPAL, CARD, KHQR
+  providerPaymentId String?     @unique // Provider-specific payment/transaction ID
+  paymentMethod   String?       // Card brand (visa/mastercard) or payment method details
   userId          String
+  jobId           String?       // Optional: Link payment to specific job posting
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   user            User          @relation(fields: [userId], references: [id])
@@ -181,4 +190,59 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+model PricingPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  price       Float
+  description String
+  features    String[]
+  highlight   Boolean  @default(false)
+  cta         String
+  badge       String?
+  href        String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("pricing_plans")
+}
+
+model SalaryCategory {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  roles     SalaryRole[]
+  order     Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("salary_categories")
+}
+
+model SalaryRole {
+  id         String         @id @default(cuid())
+  title      String
+  range      String
+  experience String
+  categoryId String
+  category   SalaryCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@map("salary_roles")
+}
+
+model SalaryInsight {
+  id          String   @id @default(cuid())
+  icon        String   // Lucide icon name
+  title       String
+  description String
+  color       String
+  bg          String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("salary_insights")
 }

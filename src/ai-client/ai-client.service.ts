@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -6,12 +7,15 @@ import { firstValueFrom } from 'rxjs';
 @Injectable()
 export class AiClientService {
   private readonly logger = new Logger(AiClientService.name);
-  private readonly aiServiceUrl = process.env.AI_SERVICE_URL || 'http://ai-service:8000';
+  private readonly aiServiceUrl: string;
 
   constructor(
     private prisma: PrismaService,
     private httpService: HttpService,
-  ) { }
+    private configService: ConfigService,
+  ) {
+    this.aiServiceUrl = this.configService.get('AI_SERVICE_URL') || 'http://ai-service:8000';
+  }
 
   async calculateJobMatch(jobId: string, applicantId: string): Promise<number> {
     const job = await this.prisma.job.findUnique({ where: { id: jobId } });

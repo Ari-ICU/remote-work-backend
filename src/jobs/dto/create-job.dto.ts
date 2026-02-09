@@ -34,4 +34,10 @@ export class CreateJobDto {
 
   @ApiProperty({ example: 'Remote', required: false })
   @IsString() @IsOptional() location?: string;
+
+  @ApiProperty({ example: false, required: false })
+  @IsBoolean() @IsOptional() featured?: boolean;
+
+  @ApiProperty({ example: 'OPEN', enum: ['DRAFT', 'OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'], required: false })
+  @IsString() @IsOptional() status?: string;
 }

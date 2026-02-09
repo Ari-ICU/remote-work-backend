@@ -1,20 +1,25 @@
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
+  app.use(cookieParser());
 
   // Enable CORS
+  const frontendUrl = configService.get('FRONTEND_URL') || 'http://localhost:3000';
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [frontendUrl, 'http://127.0.0.1:3000'],
     credentials: true,
   });
 
   // Global exception filter
-  const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new AllExceptionsFilter(app.get(HttpAdapterHost)));
 
   // Global validation pipe
@@ -44,7 +49,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT || 3001;
+  const port = configService.get('PORT') || 3001;
   await app.listen(port);
 
   console.log(`🚀 Backend API running on: http://localhost:${port}`);

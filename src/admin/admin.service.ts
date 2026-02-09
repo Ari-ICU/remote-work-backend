@@ -297,6 +297,30 @@ export class AdminService {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new NotFoundException('User not found');
 
+        // Cascade delete all related data to prevent foreign key violations
+        await Promise.all([
+            this.prisma.review.deleteMany({
+                where: { OR: [{ reviewerId: userId }, { revieweeId: userId }] }
+            }),
+            this.prisma.message.deleteMany({
+                where: { OR: [{ senderId: userId }, { receiverId: userId }] }
+            }),
+            this.prisma.notification.deleteMany({ where: { userId } }),
+            this.prisma.payment.deleteMany({ where: { userId } }),
+            this.prisma.application.deleteMany({ where: { applicantId: userId } }),
+        ]);
+
+        // Find and delete jobs posted by this user + their applications
+        const jobs = await this.prisma.job.findMany({
+            where: { posterId: userId },
+            select: { id: true }
+        });
+        const jobIds = jobs.map(j => j.id);
+        if (jobIds.length > 0) {
+            await this.prisma.application.deleteMany({ where: { jobId: { in: jobIds } } });
+            await this.prisma.job.deleteMany({ where: { id: { in: jobIds } } });
+        }
+
         return this.prisma.user.delete({ where: { id: userId } });
     }
 

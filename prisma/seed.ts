@@ -12,6 +12,10 @@ async function main() {
   await prisma.message.deleteMany({});
   await prisma.payment.deleteMany({});
   await prisma.review.deleteMany({});
+  await prisma.pricingPlan.deleteMany({});
+  await prisma.salaryInsight.deleteMany({});
+  await prisma.salaryRole.deleteMany({});
+  await prisma.salaryCategory.deleteMany({});
   await prisma.job.deleteMany({});
   await prisma.user.deleteMany({});
 
@@ -304,6 +308,158 @@ async function main() {
       type: 'SYSTEM',
     },
   });
+
+  // ────────────────────────────────────────────────
+  // Create Pricing Plans
+  // ────────────────────────────────────────────────
+  await prisma.pricingPlan.create({
+    data: {
+      name: 'Free',
+      price: 0,
+      description: 'Standard listing for casual hiring needs.',
+      features: ['30-day listing duration', 'Basic search visibility', 'Standard application limit'],
+      cta: 'Post for Free',
+      href: '/post-job?plan=free',
+      order: 0,
+    },
+  });
+
+  await prisma.pricingPlan.create({
+    data: {
+      name: 'Featured',
+      price: 29,
+      description: 'Boost your visibility and reach more candidates.',
+      features: ['60-day listing duration', 'Highlighted in search results', '2x more applications', 'Social media promotion'],
+      highlight: true,
+      badge: 'Popular',
+      cta: 'Get Featured',
+      href: '/post-job?plan=featured',
+      order: 1,
+    },
+  });
+
+  await prisma.pricingPlan.create({
+    data: {
+      name: 'Premium',
+      price: 99,
+      description: 'Maximum exposure for urgent and critical hires.',
+      features: ['90-day listing duration', 'Top of category results', 'Dedicated account manager', 'Premium support', 'Unlimited applications'],
+      highlight: false,
+      cta: 'Go Premium',
+      href: '/post-job?plan=premium',
+      order: 2,
+    },
+  });
+
+  // ────────────────────────────────────────────────
+  // Create Salary Guide Data
+  // ────────────────────────────────────────────────
+  console.log('Seeding Salary Guide data...');
+  const salaryCategories = [
+    {
+      name: "Software Development",
+      roles: [
+        { title: "Junior Developer", range: "$800 - $1,500", experience: "0-2 years" },
+        { title: "Mid-Level Developer", range: "$1,500 - $2,500", experience: "2-5 years" },
+        { title: "Senior Developer", range: "$2,500 - $4,000", experience: "5+ years" },
+        { title: "Tech Lead", range: "$3,500 - $5,500", experience: "7+ years" },
+      ],
+    },
+    {
+      name: "Design & Creative",
+      roles: [
+        { title: "UI/UX Designer", range: "$700 - $1,800", experience: "0-3 years" },
+        { title: "Graphic Designer", range: "$600 - $1,500", experience: "0-3 years" },
+        { title: "Senior Designer", range: "$1,800 - $3,000", experience: "3-6 years" },
+        { title: "Creative Director", range: "$2,500 - $4,500", experience: "6+ years" },
+      ],
+    },
+    {
+      name: "Marketing & Sales",
+      roles: [
+        { title: "Digital Marketer", range: "$600 - $1,400", experience: "0-2 years" },
+        { title: "Content Writer", range: "$500 - $1,200", experience: "0-3 years" },
+        { title: "Marketing Manager", range: "$1,500 - $2,800", experience: "3-6 years" },
+        { title: "Sales Manager", range: "$1,800 - $3,500", experience: "3-7 years" },
+      ],
+    },
+    {
+      name: "Data & Analytics",
+      roles: [
+        { title: "Data Analyst", range: "$900 - $1,800", experience: "0-3 years" },
+        { title: "Data Scientist", range: "$1,800 - $3,500", experience: "2-5 years" },
+        { title: "ML Engineer", range: "$2,200 - $4,200", experience: "3-6 years" },
+        { title: "Analytics Manager", range: "$2,500 - $4,500", experience: "5+ years" },
+      ],
+    },
+    {
+      name: "Project Management",
+      roles: [
+        { title: "Project Coordinator", range: "$700 - $1,400", experience: "0-2 years" },
+        { title: "Project Manager", range: "$1,500 - $2,800", experience: "2-5 years" },
+        { title: "Senior PM", range: "$2,500 - $4,000", experience: "5-8 years" },
+        { title: "Program Manager", range: "$3,000 - $5,000", experience: "7+ years" },
+      ],
+    },
+  ];
+
+  for (const [index, cat] of salaryCategories.entries()) {
+    const createdCat = await prisma.salaryCategory.create({
+      data: {
+        name: cat.name,
+        order: index,
+      }
+    });
+    for (const role of cat.roles) {
+      await prisma.salaryRole.create({
+        data: {
+          ...role,
+          categoryId: createdCat.id,
+        }
+      });
+    }
+  }
+
+  const salaryInsights = [
+    {
+      icon: "TrendingUp",
+      title: "Growing Demand",
+      description: "Remote work opportunities in Cambodia have increased by 45% in the last year.",
+      color: "text-green-500",
+      bg: "bg-green-500/10",
+      order: 0,
+    },
+    {
+      icon: "DollarSign",
+      title: "Competitive Rates",
+      description: "Cambodian freelancers offer competitive rates while maintaining high-quality work.",
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+      order: 1,
+    },
+    {
+      icon: "Users",
+      title: "Diverse Talent Pool",
+      description: "Access to skilled professionals across 50+ different specializations.",
+      color: "text-purple-500",
+      bg: "bg-purple-500/10",
+      order: 2,
+    },
+    {
+      icon: "Award",
+      title: "Quality Standards",
+      description: "85% of projects are completed on time with high client satisfaction rates.",
+      color: "text-orange-500",
+      bg: "bg-orange-500/10",
+      order: 3,
+    },
+  ];
+
+  for (const insight of salaryInsights) {
+    await prisma.salaryInsight.create({
+      data: insight
+    });
+  }
 
   console.log('Seed completed successfully!');
 }

@@ -28,11 +28,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
         }
         console.error('--------------------------------');
 
+        let message = 'Internal server error';
+        if (exception instanceof HttpException) {
+            const response = exception.getResponse();
+            message = typeof response === 'object' && response !== null && 'message' in response
+                ? (response as any).message
+                : exception.message;
+        } else if (exception instanceof Error) {
+            message = exception.message;
+        }
+
         const responseBody = {
             statusCode: httpStatus,
             timestamp: new Date().toISOString(),
             path: httpAdapter.getRequestUrl(ctx.getRequest()),
-            message: exception instanceof Error ? exception.message : 'Internal server error',
+            message: message,
         };
 
         httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);

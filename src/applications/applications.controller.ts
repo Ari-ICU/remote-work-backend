@@ -32,4 +32,20 @@ export class ApplicationsController {
   getForJob(@Param('jobId') jobId: string, @Request() req) {
     return this.applicationsService.getForJob(jobId, req.user.id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(':id/accept')
+  @ApiOperation({ summary: 'Accept an application and auto-close job' })
+  acceptApplication(@Param('id') id: string, @Request() req) {
+    return this.applicationsService.acceptApplication(id, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(':id/reject')
+  @ApiOperation({ summary: 'Reject an application' })
+  rejectApplication(@Param('id') id: string, @Request() req) {
+    return this.applicationsService.rejectApplication(id, req.user.id);
+  }
 }

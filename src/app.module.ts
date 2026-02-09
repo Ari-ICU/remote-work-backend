@@ -14,6 +14,9 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { AdminModule } from './admin/admin.module';
 import { PricingModule } from './pricing/pricing.module';
 import { SalaryGuideModule } from './salary-guide/salary-guide.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { HiringSolutionsModule } from './hiring-solutions/hiring-solutions.module';
+import { EmployerResourcesModule } from './employer-resources/employer-resources.module';
 import { join } from 'path';
 
 @Module({
@@ -54,6 +57,9 @@ import { join } from 'path';
         AdminModule,
         PricingModule,
         SalaryGuideModule,
+        ReviewsModule,
+        HiringSolutionsModule,
+        EmployerResourcesModule,
     ],
 })
 export class AppModule { }

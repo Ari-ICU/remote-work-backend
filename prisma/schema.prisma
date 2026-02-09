@@ -246,3 +246,100 @@ model SalaryInsight {
 
   @@map("salary_insights")
 }
+
+model HiringSolution {
+  id          String   @id @default(cuid())
+  icon        String   // Lucide icon name
+  title       String
+  description String
+  features    String[]
+  color       String
+  bg          String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("hiring_solutions")
+}
+
+model HiringStat {
+  id        String   @id @default(cuid())
+  label     String
+  value     String
+  icon      String   // Lucide icon name
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("hiring_stats")
+}
+
+model HiringPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  price       String
+  period      String
+  description String
+  features    String[]
+  cta         String
+  popular     Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("hiring_plans")
+}
+
+model EmployerResourceCategory {
+  id          String   @id @default(cuid())
+  icon        String
+  title       String
+  description String
+  resources   String[]
+  color       String
+  bg          String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("employer_resource_categories")
+}
+
+model EmployerFeaturedGuide {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String
+  readTime    String
+  icon        String
+  color       String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("employer_featured_guides")
+}
+
+model EmployerDownloadableResource {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  format      String
+  size        String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("employer_downloadable_resources")
+}
+
+model EmployerFAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("employer_faqs")
+}

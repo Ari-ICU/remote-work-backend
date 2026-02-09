@@ -29,6 +29,8 @@ export class JobsService {
             id: true,
             firstName: true,
             lastName: true,
+            email: true,
+            website: true,
             avatar: true
           }
         },
@@ -102,6 +104,8 @@ export class JobsService {
             avatar: true,
             bio: true,
             location: true,
+            email: true,
+            website: true,
             createdAt: true
           }
         },

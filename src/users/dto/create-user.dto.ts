@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsEnum, IsOptional, MinLength } from 'class-validator';
+import { IsEmail, IsString, IsEnum, IsOptional, MinLength, Matches } from 'class-validator';
 import { UserRole } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -7,9 +7,12 @@ export class CreateUserDto {
   @IsEmail({}, { message: 'Please provide a valid email address' })
   email: string;
 
-  @ApiProperty({ example: 'password123', minLength: 8 })
+  @ApiProperty({ example: 'Password123!', minLength: 8 })
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+    message: 'Password is too weak. It must contain at least one uppercase letter, one lowercase letter, and one number or special character.',
+  })
   password: string;
 
   @ApiProperty({ example: 'John' })

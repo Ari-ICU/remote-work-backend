@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 import { CreateApplicationDto } from './dto/create-application.dto';
@@ -20,13 +20,22 @@ export class ApplicationsService {
     });
 
     if (existing) {
-      throw new Error('You have already applied to this job');
+      throw new BadRequestException('You have already applied to this job');
     }
 
-    // Check if job is still open
+    // Check if job exists and is still open
     const job = await this.prisma.job.findUnique({ where: { id: jobId } });
-    if (!job || job.status !== 'OPEN') {
-      throw new Error('This job is no longer accepting applications');
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    if (job.status !== 'OPEN') {
+      throw new BadRequestException('This job is no longer accepting applications');
+    }
+
+    // Prevention: Employer cannot apply for their own job
+    if (job.posterId === applicantId) {
+      throw new BadRequestException('You cannot apply for your own job');
     }
 
     const application = await this.prisma.application.create({
@@ -50,8 +59,11 @@ export class ApplicationsService {
   async getForJob(jobId: string, userId: string) {
     // Check if user is the job poster
     const job = await this.prisma.job.findUnique({ where: { id: jobId } });
-    if (!job || job.posterId !== userId) {
-      throw new Error('Access denied');
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+    if (job.posterId !== userId) {
+      throw new ForbiddenException('Access denied');
     }
 
     return this.prisma.application.findMany({
@@ -89,12 +101,12 @@ export class ApplicationsService {
     });
 
     if (!application) {
-      throw new Error('Application not found');
+      throw new NotFoundException('Application not found');
     }
 
     // Verify employer owns the job
     if (application.job.posterId !== employerId) {
-      throw new Error('Access denied');
+      throw new ForbiddenException('Access denied');
     }
 
     // Update application status to ACCEPTED
@@ -129,12 +141,12 @@ export class ApplicationsService {
     });
 
     if (!application) {
-      throw new Error('Application not found');
+      throw new NotFoundException('Application not found');
     }
 
     // Verify employer owns the job
     if (application.job.posterId !== employerId) {
-      throw new Error('Access denied');
+      throw new ForbiddenException('Access denied');
     }
 
     // Update application status to REJECTED

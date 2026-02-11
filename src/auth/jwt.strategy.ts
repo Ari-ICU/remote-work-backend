@@ -14,10 +14,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           let token = null;
           if (req && req.cookies) {
             token = req.cookies['token'];
-            console.log('🍪 Cookie token:', token ? 'Found' : 'Not found');
-            console.log('🍪 Available cookies:', Object.keys(req.cookies));
-          } else {
-            console.log('❌ No cookies in request');
           }
           return token;
         },
@@ -28,7 +24,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    console.log('✅ JWT validated for:', payload.email);
     return { id: payload.sub, email: payload.email, role: payload.role };
   }
 }

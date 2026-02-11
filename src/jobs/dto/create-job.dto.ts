@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsArray, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsNumber, IsArray, IsOptional, IsBoolean, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateJobDto {
@@ -15,7 +15,7 @@ export class CreateJobDto {
   @IsArray() @IsString({ each: true }) skills: string[];
 
   @ApiProperty({ example: 1000 })
-  @IsNumber() budget: number;
+  @IsNumber() @Min(0) budget: number;
 
   @ApiProperty({ example: 'FIXED', enum: ['FIXED', 'HOURLY'] })
   @IsString() budgetType: string;

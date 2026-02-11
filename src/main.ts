@@ -4,11 +4,18 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import * as express from 'express';
 import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Body size limits for security
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ limit: '1mb', extended: true }));
+
   const configService = app.get(ConfigService);
 
   // Security headers
@@ -17,12 +24,17 @@ async function bootstrap() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: [`'self'`],
-        styleSrc: [`'self'`, `'unsafe-inline'`],
+        styleSrc: [`'self'`, `'unsafe-inline'`, 'https://fonts.googleapis.com'],
+        fontSrc: [`'self'`, 'https://fonts.gstatic.com', 'data:'],
         imgSrc: [`'self'`, 'data:', 'https:'],
         scriptSrc: [`'self'`, `'unsafe-inline'`, `https:`, `http:`],
+        connectSrc: [`'self'`, `https:`, `http:`],
       },
     },
   }));
+  app.use(helmet.hidePoweredBy());
+  app.use(helmet.xssFilter());
+  app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
 
   app.use(cookieParser());
 
@@ -50,6 +62,9 @@ async function bootstrap() {
 
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter(app.get(HttpAdapterHost)));
+
+  // Global logging interceptor
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   // Global validation pipe
   app.useGlobalPipes(

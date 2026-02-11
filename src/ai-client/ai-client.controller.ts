@@ -46,6 +46,8 @@ export class AiClientController {
         };
     }
 
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @Post('chat')
     @ApiOperation({ summary: 'Chat with the AI assistant' })
     async chat(@Body() body: { message: string }) {

@@ -3,6 +3,8 @@ import { AiClientService } from './ai-client.service';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { IsString, IsNotEmpty } from 'class-validator';
+import { Throttle } from '@nestjs/throttler';
+
 
 export class GenerateDescriptionDto {
     @ApiProperty({ example: 'React Native Developer', description: 'Job title' })
@@ -18,6 +20,7 @@ export class GenerateDescriptionDto {
 
 @ApiTags('ai')
 @Controller('ai')
+@Throttle({ default: { limit: 10, ttl: 60000 } })
 export class AiClientController {
     constructor(private readonly aiService: AiClientService) { }
 

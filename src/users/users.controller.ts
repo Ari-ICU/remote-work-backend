@@ -6,6 +6,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
+import { Throttle } from '@nestjs/throttler';
+
 
 @ApiTags('users')
 @Controller('users')
@@ -45,6 +47,9 @@ export class UsersController {
         cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
       },
     }),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
     fileFilter: (req, file, cb) => {
       if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
         return cb(new Error('Only image files are allowed!'), false);
@@ -65,6 +70,7 @@ export class UsersController {
     },
   })
   @ApiOperation({ summary: 'Upload user avatar' })
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   async uploadAvatar(@Request() req: any, @UploadedFile() file: any) {
     if (!file) {
       console.error('No file uploaded in request');
@@ -87,6 +93,9 @@ export class UsersController {
         cb(null, `resume-${uniqueSuffix}${extname(file.originalname)}`);
       },
     }),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
     fileFilter: (req, file, cb) => {
       if (!file.originalname.match(/\.(pdf|doc|docx)$/)) {
         return cb(new Error('Only PDF and Word documents are allowed!'), false);
@@ -107,6 +116,7 @@ export class UsersController {
     },
   })
   @ApiOperation({ summary: 'Upload user resume' })
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   async uploadResume(@Request() req: any, @UploadedFile() file: any) {
     if (!file) {
       throw new BadRequestException('No file uploaded');

@@ -40,10 +40,18 @@ export class AiClientController {
     @Post('generate-description')
     @ApiOperation({ summary: 'Generate a job description using AI' })
     async generateDescription(@Body() dto: GenerateDescriptionDto) {
-        return {
-            description: `[AI Generated] We are looking for a skilled ${dto.title} in the ${dto.category} field. Prerequisites include strong problem-solving skills and experience with modern tools...`,
-            suggestedSkills: ['React', 'TypeScript', 'Node.js']
-        };
+        return this.aiService.generateJobDescription({
+            title: dto.title,
+            industry: dto.category,
+        });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @Post('proposal')
+    @ApiOperation({ summary: 'Generate a personalized cover letter' })
+    async generateProposal(@Body() body: { job_title: string; job_description: string; user_skills: string[]; user_bio?: string }) {
+        return this.aiService.generateProposal(body);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -53,5 +61,21 @@ export class AiClientController {
     async chat(@Body() body: { message: string }) {
         const reply = await this.aiService.chat(body.message);
         return { reply };
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @Post('predict-salary')
+    @ApiOperation({ summary: 'Predict market salary based on skills and experience' })
+    async predictSalary(@Body() body: { skills: string[]; experience_level: string; location?: string; job_type?: string }) {
+        return this.aiService.predictSalary(body);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @Post('interview-questions')
+    @ApiOperation({ summary: 'Generate tailored interview questions for an applicant' })
+    async generateInterviewQuestions(@Body() body: { job_title: string; job_description: string; candidate_skills: string[]; candidate_bio?: string }) {
+        return this.aiService.generateInterviewQuestions(body);
     }
 }

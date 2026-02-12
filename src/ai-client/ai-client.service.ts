@@ -67,4 +67,57 @@ export class AiClientService {
       return "I'm having some trouble thinking right now. Please try again in a moment!";
     }
   }
+
+  async generateProposal(data: { job_title: string; job_description: string; user_skills: string[]; user_bio?: string }) {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(`${this.aiServiceUrl}/api/ai/generation/proposal`, data),
+      );
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Error generating proposal: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async generateJobDescription(data: { title: string; industry: string; key_points?: string; experience_level?: string }) {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(`${this.aiServiceUrl}/api/ai/generation/job-description`, data),
+      );
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Error generating job description: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async predictSalary(data: { skills: string[]; experience_level: string; location?: string; job_type?: string }) {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(`${this.aiServiceUrl}/api/ai/predictions/salary`, data),
+      );
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Error predicting salary: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async generateInterviewQuestions(data: { job_title: string; job_description: string; candidate_skills: string[]; candidate_bio?: string }) {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(`${this.aiServiceUrl}/api/ai/generation/interview-questions`, {
+          job_title: data.job_title,
+          job_description: data.job_description,
+          candidate_skills: data.candidate_skills,
+          candidate_bio: data.candidate_bio
+        }),
+      );
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Error generating interview questions: ${error.message}`);
+      throw error;
+    }
+  }
 }

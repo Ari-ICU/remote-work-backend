@@ -20,7 +20,7 @@ RUN npx prisma generate
 
 RUN npm run build
 
-EXPOSE 3001
+EXPOSE 10000
 
-# Generate Prisma client and start the app (ensure it's latest at runtime too)
-CMD npx prisma generate && npm run start:dev
+# Generate Prisma client and start the app in production mode
+CMD npx prisma generate && npm run start:prod

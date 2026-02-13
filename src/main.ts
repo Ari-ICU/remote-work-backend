@@ -18,6 +18,9 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
+  // Enable cookie parser immediately
+  app.use(cookieParser());
+
   // Security headers
   app.use(helmet({
     crossOriginEmbedderPolicy: false,
@@ -36,30 +39,14 @@ async function bootstrap() {
   app.use(helmet.xssFilter());
   app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
 
-  app.use(cookieParser());
-
   // Enable CORS
   const frontendUrl = configService.get('FRONTEND_URL') || 'http://localhost:3000';
-  const allowedOrigins = [
-    frontendUrl,
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5173', // Default Vite port
-    'https://remote-work-frontend-flame.vercel.app', // Deployed Vercel frontend
-  ];
 
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: true, // Allow all origins for now to debug cookie issues
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization, x-skip-loading',
-
   });
 
   // Global exception filter

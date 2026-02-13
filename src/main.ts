@@ -46,7 +46,7 @@ async function bootstrap() {
     origin: true, // Allow all origins for now to debug cookie issues
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization, x-skip-loading',
+    allowedHeaders: 'Content-Type, Accept, Authorization, x-skip-loading, x-skip-auth',
   });
 
   // Global exception filter

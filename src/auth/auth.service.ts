@@ -93,9 +93,44 @@ export class AuthService {
 
       const newPayload = { email: payload.email, sub: payload.sub, role: payload.role };
       const accessToken = this.jwtService.sign(newPayload, { expiresIn: '15m' });
+      const newRefreshToken = this.jwtService.sign(newPayload, { expiresIn: '7d' });
 
-      return { accessToken };
+      // Rotate refresh token - delete old, create new
+      await this.prisma.session.delete({ where: { id: session.id } });
+      await this.prisma.session.create({
+        data: {
+          userId: session.userId,
+          token: newRefreshToken,
+          ipAddress: session.ipAddress,
+          userAgent: session.userAgent,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        }
+      });
+
+      // Fetch user data to return
+      const user = await this.prisma.user.findUnique({
+        where: { id: session.userId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          avatar: true,
+          bio: true,
+          headline: true,
+          website: true,
+          github: true,
+          linkedin: true,
+          location: true,
+          skills: true,
+          hourlyRate: true,
+        }
+      });
+
+      return { accessToken, refreshToken: newRefreshToken, user };
     } catch (e) {
+      console.log(e);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }

@@ -133,4 +133,16 @@ export class AdminController {
     cleanupTestData() {
         return this.adminService.cleanupTestData();
     }
+
+    @Get('settings')
+    @ApiOperation({ summary: 'Get platform integration settings' })
+    getSettings() {
+        return this.adminService.getPlatformSettings();
+    }
+
+    @Patch('settings')
+    @ApiOperation({ summary: 'Update platform integration settings' })
+    updateSettings(@Body() data: any) {
+        return this.adminService.updatePlatformSettings(data);
+    }
 }

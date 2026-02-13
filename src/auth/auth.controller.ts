@@ -8,6 +8,8 @@ import { LoginDto } from './dto/login.dto';
 import { UsersService } from '../users/users.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { GithubAuthGuard } from './guards/github-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
 
 @ApiTags('auth')
 @Controller('auth')
@@ -177,5 +179,19 @@ export class AuthController {
     const redirectUrl = `${frontendUrl}/auth/callback?user=${encodeURIComponent(JSON.stringify(authData.user))}`;
 
     return res.redirect(redirectUrl);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  @ApiOperation({ summary: 'Get current user profile (alias for /users/profile/me)' })
+  getProfile(@Req() req) {
+    return this.usersService.findOne(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile (alias for /users/profile/me)' })
+  getMe(@Req() req) {
+    return this.usersService.findOne(req.user.id);
   }
 }

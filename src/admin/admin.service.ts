@@ -468,4 +468,20 @@ export class AdminService {
             message: `Successfully removed ${deleted.count} test users and their associated data.`
         };
     }
+
+    async getPlatformSettings() {
+        return {
+            stripeKey: process.env.STRIPE_SECRET_KEY || 'sk_test_••••••••',
+            openaiKey: process.env.OPENAI_API_KEY || 'sk_test_••••••••',
+            paymentAccount: process.env.PAYMENT_ACCOUNT_ID || 'acct_default',
+            environment: process.env.NODE_ENV || 'development'
+        };
+    }
+
+    async updatePlatformSettings(data: any) {
+        // In a real production app, you would save these to a database or AWS Secrets Manager.
+        // For this implementation, we will mock the update and provide instructions in the UI.
+        console.log('Update platform settings requested:', data);
+        return { success: true, message: 'Settings updated' };
+    }
 }

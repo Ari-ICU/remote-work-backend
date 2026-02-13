@@ -25,21 +25,23 @@ export class AuthService {
 
   async login(user: any, ip?: string, ua?: string) {
     const payload = { email: user.email, sub: user.id, role: user.role };
-    const accessToken = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    // Store session in DB
+    // Store refresh token in DB session
     await this.prisma.session.create({
       data: {
         userId: user.id,
-        token: accessToken,
+        token: refreshToken,
         ipAddress: ip,
         userAgent: ua,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Match cookie duration
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       }
     });
 
     return {
       accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -57,6 +59,33 @@ export class AuthService {
         hourlyRate: user.hourlyRate,
       }
     };
+  }
+
+  async refresh(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken);
+      const session = await this.prisma.session.findUnique({
+        where: { token: refreshToken }
+      });
+
+      if (!session || !session.isValid || session.expiresAt < new Date()) {
+        throw new UnauthorizedException('Invalid session');
+      }
+
+      const newPayload = { email: payload.email, sub: payload.sub, role: payload.role };
+      const accessToken = this.jwtService.sign(newPayload, { expiresIn: '15m' });
+
+      return { accessToken };
+    } catch (e) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+  async logout(refreshToken: string) {
+    if (!refreshToken) return;
+    await this.prisma.session.deleteMany({
+      where: { token: refreshToken }
+    });
   }
 
   async validateSession(token: string): Promise<boolean> {

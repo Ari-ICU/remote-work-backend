@@ -106,25 +106,30 @@ export class AuthController {
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
   async refresh(@Req() req, @Res({ passthrough: true }) res) {
-    const refreshToken = req.cookies['refresh_token'];
+
+    const { refreshToken: bodyRefreshToken } = req.body;
+    const cookieRefreshToken = req.cookies['refresh_token'];
+    const refreshToken = bodyRefreshToken || cookieRefreshToken;
 
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token not found');
     }
 
     try {
-      const { accessToken } = await this.authService.refresh(refreshToken);
+      const { accessToken, refreshToken: newRefreshToken, user } = await this.authService.refresh(refreshToken);
 
-      // Update access token cookie
-      res.cookie('token', accessToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        sameSite: 'lax',
-        maxAge: 15 * 60 * 1000, // 15 minutes
-        path: '/',
-      });
+      // Support both cookie and body response
+      if (cookieRefreshToken) {
+        // Update cookies if they were used
+        this.setAuthCookies(res, accessToken, newRefreshToken);
+      }
 
-      return { success: true };
+      return {
+        success: true,
+        accessToken,
+        refreshToken: newRefreshToken,
+        user
+      };
     } catch (e) {
       // Clear all cookies if refresh fails
       res.clearCookie('token');

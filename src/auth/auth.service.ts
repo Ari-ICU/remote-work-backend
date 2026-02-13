@@ -23,10 +23,23 @@ export class AuthService {
     return null;
   }
 
-  async login(user: any) {
+  async login(user: any, ip?: string, ua?: string) {
     const payload = { email: user.email, sub: user.id, role: user.role };
+    const accessToken = this.jwtService.sign(payload);
+
+    // Store session in DB
+    await this.prisma.session.create({
+      data: {
+        userId: user.id,
+        token: accessToken,
+        ipAddress: ip,
+        userAgent: ua,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Match cookie duration
+      }
+    });
+
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken,
       user: {
         id: user.id,
         email: user.email,
@@ -44,6 +57,14 @@ export class AuthService {
         hourlyRate: user.hourlyRate,
       }
     };
+  }
+
+  async validateSession(token: string): Promise<boolean> {
+    const session = await this.prisma.session.findUnique({
+      where: { token }
+    });
+
+    return !!(session && session.isValid && session.expiresAt > new Date());
   }
 
   async validateOAuthUser(profile: any) {

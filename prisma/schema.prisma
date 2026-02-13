@@ -43,8 +43,24 @@ model User {
   paymentProvider  String?       // Payment provider: PAYPAL, CARD, KHQR
   paymentProviderId String?      // Provider-specific customer/account ID
   hasPaymentMethod Boolean       @default(false) // Whether user has connected payment method
+  sessions         Session[]
 
   @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  userAgent String?
+  ipAddress String?
+  isValid   Boolean  @default(true)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
 }
 
 model Job {

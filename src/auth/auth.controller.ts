@@ -65,7 +65,10 @@ export class AuthController {
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    const authData = await this.authService.login(user);
+    const req: any = res.req; // Access underlying request object from response object
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const ua = req.headers['user-agent'];
+    const authData = await this.authService.login(user, ip, ua);
 
     // Set httpOnly cookie for API requests
     res.cookie('token', authData.accessToken, {

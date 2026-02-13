@@ -19,6 +19,7 @@ import { SalaryGuideModule } from './salary-guide/salary-guide.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { HiringSolutionsModule } from './hiring-solutions/hiring-solutions.module';
 import { EmployerResourcesModule } from './employer-resources/employer-resources.module';
+import { HealthController } from './health.controller';
 import { join } from 'path';
 
 @Module({
@@ -74,6 +75,7 @@ import { join } from 'path';
         HiringSolutionsModule,
         EmployerResourcesModule,
     ],
+    controllers: [HealthController],
     providers: [
         {
             provide: APP_GUARD,

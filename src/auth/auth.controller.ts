@@ -107,11 +107,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh access token' })
   async refresh(@Req() req, @Res({ passthrough: true }) res) {
 
-    const { refreshToken: bodyRefreshToken } = req.body;
+    const { refreshToken: bodyRefreshToken } = req.body || {};
     const cookieRefreshToken = req.cookies['refresh_token'];
-    const refreshToken = bodyRefreshToken || cookieRefreshToken;
+    const refreshToken = cookieRefreshToken || bodyRefreshToken;
 
     if (!refreshToken) {
+      console.warn('Refresh token not found in cookies or body', {
+        hasCookies: !!req.cookies,
+        cookieKeys: Object.keys(req.cookies || {}),
+        hasBody: !!req.body,
+      });
       throw new UnauthorizedException('Refresh token not found');
     }
 

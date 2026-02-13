@@ -54,10 +54,8 @@ export class AiClientController {
         return this.aiService.generateProposal(body);
     }
 
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
     @Post('chat')
-    @ApiOperation({ summary: 'Chat with the AI assistant' })
+    @ApiOperation({ summary: 'Chat with the AI assistant (public endpoint)' })
     async chat(@Body() body: { message: string }) {
         const reply = await this.aiService.chat(body.message);
         return { reply };

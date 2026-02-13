@@ -40,7 +40,7 @@ export class AuthController {
       secure: isProduction,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/auth', // Restrict to auth endpoints if possible, but general path is safer for now to avoid issues
+      path: '/', // Changed from '/auth' to '/' to ensure cookie is sent with all requests
     });
 
     // IS_AUTHENTICATED (For Frontend UI State - NOT HttpOnly)
@@ -108,7 +108,7 @@ export class AuthController {
   async refresh(@Req() req, @Res({ passthrough: true }) res) {
 
     const { refreshToken: bodyRefreshToken } = req.body || {};
-    const cookieRefreshToken = req.cookies['refresh_token'];
+    const cookieRefreshToken = req.cookies['refresh_token'] || req.cookies['refreshToken']; // Check both naming conventions
     const refreshToken = cookieRefreshToken || bodyRefreshToken;
 
     if (!refreshToken) {
@@ -116,6 +116,9 @@ export class AuthController {
         hasCookies: !!req.cookies,
         cookieKeys: Object.keys(req.cookies || {}),
         hasBody: !!req.body,
+        bodyRefreshToken: bodyRefreshToken ? 'present' : 'missing',
+        cookieRefreshToken: cookieRefreshToken ? 'present' : 'missing',
+        allCookies: req.cookies, // Show all cookie values for debugging
       });
       throw new UnauthorizedException('Refresh token not found');
     }

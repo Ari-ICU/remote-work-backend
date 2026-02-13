@@ -41,9 +41,24 @@ async function bootstrap() {
 
   // Enable CORS
   const frontendUrl = configService.get('FRONTEND_URL') || 'http://localhost:3000';
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://remote-work-frontend-flame.vercel.app',
+    frontendUrl,
+  ];
 
   app.enableCors({
-    origin: true, // Allow all origins for now to debug cookie issues
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization, x-skip-loading, x-skip-auth',

@@ -136,4 +136,45 @@ export class MessagingGateway implements OnGatewayConnection {
     this.server.to(data.otherUserId).emit('conversationDeleted', { userId });
     this.server.to(userId).emit('conversationDeleted', { otherUserId: data.otherUserId });
   }
+
+  // WebRTC Signaling Events
+  @SubscribeMessage('callUser')
+  async handleCallUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { userToCall: string; signalData: any; from: string; name: string }
+  ) {
+    this.server.to(data.userToCall).emit('callMade', {
+      signal: data.signalData,
+      from: data.from,
+      name: data.name
+    });
+  }
+
+  @SubscribeMessage('answerCall')
+  async handleAnswerCall(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { to: string; signal: any }
+  ) {
+    this.server.to(data.to).emit('callAnswered', {
+      signal: data.signal
+    });
+  }
+
+  @SubscribeMessage('iceCandidate')
+  async handleIceCandidate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { to: string; candidate: any }
+  ) {
+    this.server.to(data.to).emit('iceCandidate', {
+      candidate: data.candidate
+    });
+  }
+
+  @SubscribeMessage('hangUp')
+  async handleHangUp(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { to: string }
+  ) {
+    this.server.to(data.to).emit('callEnded');
+  }
 }

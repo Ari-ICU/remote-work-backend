@@ -29,7 +29,7 @@ export class AuthController {
     res.cookie('token', accessToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 15 * 60 * 1000, // 15 minutes
       path: '/',
     });
@@ -38,7 +38,7 @@ export class AuthController {
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/', // Changed from '/auth' to '/' to ensure cookie is sent with all requests
     });
@@ -47,7 +47,7 @@ export class AuthController {
     res.cookie('is_authenticated', 'true', {
       httpOnly: false, // JavaScript can read this
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/',
     });

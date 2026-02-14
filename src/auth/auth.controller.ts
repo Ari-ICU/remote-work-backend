@@ -24,32 +24,41 @@ export class AuthController {
 
   private setAuthCookies(res: any, accessToken: string, refreshToken: string) {
     const isProduction = this.configService.get('NODE_ENV') === 'production';
+    const req = res.req;
+    const origin = req.headers.origin;
+
+    // Cross-site requests (like Vercel to Localhost) REQUIRED SameSite: None and Secure: true
+    // Note: Secure: true requires the backend to be on HTTPS (except for localhost in some browsers)
+    const isCrossSite = origin && !origin.includes('localhost:3001') && !origin.includes('localhost:3000');
+
+    // If we're in production OR the request is coming from a cross-site origin (like Vercel)
+    const useSecure = isProduction || isCrossSite;
+    const sameSite = isCrossSite || isProduction ? 'none' : 'lax';
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: useSecure,
+      sameSite: sameSite as any,
+      path: '/',
+    };
 
     // Access Token (Short-lived: 15m)
     res.cookie('token', accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 15 * 60 * 1000, // 15 minutes
-      path: '/',
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
     });
 
     // Refresh Token (Long-lived: 7d)
     res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/', // Changed from '/auth' to '/' to ensure cookie is sent with all requests
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     // IS_AUTHENTICATED (For Frontend UI State - NOT HttpOnly)
     res.cookie('is_authenticated', 'true', {
-      httpOnly: false, // JavaScript can read this
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/',
+      ...cookieOptions,
+      httpOnly: false,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }
 
@@ -75,8 +84,7 @@ export class AuthController {
 
     return {
       user: userData,
-      accessToken,
-      refreshToken
+      // Tokens are now stored in HttpOnly cookies and database session
     };
   }
 
@@ -98,8 +106,7 @@ export class AuthController {
 
     return {
       user: userData,
-      accessToken,
-      refreshToken
+      // Tokens are now stored in HttpOnly cookies and database session
     };
   }
 
@@ -108,35 +115,23 @@ export class AuthController {
   async refresh(@Req() req, @Res({ passthrough: true }) res) {
 
     const { refreshToken: bodyRefreshToken } = req.body || {};
-    const cookieRefreshToken = req.cookies['refresh_token'] || req.cookies['refreshToken']; // Check both naming conventions
+    const cookieRefreshToken = req.cookies['refresh_token'] || req.cookies['refreshToken'];
     const refreshToken = cookieRefreshToken || bodyRefreshToken;
 
     if (!refreshToken) {
-      console.warn('Refresh token not found in cookies or body', {
-        hasCookies: !!req.cookies,
-        cookieKeys: Object.keys(req.cookies || {}),
-        hasBody: !!req.body,
-        bodyRefreshToken: bodyRefreshToken ? 'present' : 'missing',
-        cookieRefreshToken: cookieRefreshToken ? 'present' : 'missing',
-        allCookies: req.cookies, // Show all cookie values for debugging
-      });
       throw new UnauthorizedException('Refresh token not found');
     }
 
     try {
       const { accessToken, refreshToken: newRefreshToken, user } = await this.authService.refresh(refreshToken);
 
-      // Support both cookie and body response
-      if (cookieRefreshToken) {
-        // Update cookies if they were used
-        this.setAuthCookies(res, accessToken, newRefreshToken);
-      }
+      // Always update cookies
+      this.setAuthCookies(res, accessToken, newRefreshToken);
 
       return {
         success: true,
-        accessToken,
-        refreshToken: newRefreshToken,
         user
+        // Tokens are now in cookies
       };
     } catch (e) {
       // Clear all cookies if refresh fails
@@ -175,6 +170,7 @@ export class AuthController {
     this.setAuthCookies(res, accessToken, refreshToken);
 
     const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
+    // No tokens in the URL - they are in HttpOnly cookies
     const redirectUrl = `${frontendUrl}/auth/callback?user=${encodeURIComponent(JSON.stringify(userData))}`;
 
     return res.redirect(redirectUrl);
@@ -198,6 +194,7 @@ export class AuthController {
     this.setAuthCookies(res, accessToken, refreshToken);
 
     const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
+    // No tokens in the URL - they are in HttpOnly cookies
     const redirectUrl = `${frontendUrl}/auth/callback?user=${encodeURIComponent(JSON.stringify(userData))}`;
 
     return res.redirect(redirectUrl);

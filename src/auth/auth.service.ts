@@ -47,14 +47,15 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    // Store refresh token in DB session
+    // Store both tokens in DB session
     await this.prisma.session.create({
       data: {
         userId: user.id,
-        token: refreshToken,
+        token: refreshToken, // Use token column for refreshToken for compatibility
+        accessToken: accessToken, // Use new accessToken column
         ipAddress: ip,
         userAgent: ua,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days (based on Refresh Token)
       }
     });
 
@@ -95,12 +96,13 @@ export class AuthService {
       const accessToken = this.jwtService.sign(newPayload, { expiresIn: '15m' });
       const newRefreshToken = this.jwtService.sign(newPayload, { expiresIn: '7d' });
 
-      // Rotate refresh token - delete old, create new
+      // Rotate tokens - delete old, create new
       await this.prisma.session.delete({ where: { id: session.id } });
       await this.prisma.session.create({
         data: {
           userId: session.userId,
           token: newRefreshToken,
+          accessToken: accessToken,
           ipAddress: session.ipAddress,
           userAgent: session.userAgent,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -140,6 +142,14 @@ export class AuthService {
     await this.prisma.session.deleteMany({
       where: { token: refreshToken }
     });
+  }
+
+  async validateAccessToken(token: string): Promise<boolean> {
+    const session = await this.prisma.session.findUnique({
+      where: { accessToken: token }
+    });
+
+    return !!(session && session.isValid);
   }
 
   async validateSession(token: string): Promise<boolean> {

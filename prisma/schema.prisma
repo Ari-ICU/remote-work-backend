@@ -9,85 +9,86 @@ datasource db {
 }
 
 model User {
-  id               String        @id @default(cuid())
-  email            String        @unique
-  password         String
-  firstName        String
-  lastName         String
-  role             UserRole      @default(FREELANCER)
-  avatar           String?
-  bio              String?
-  skills           String[]
-  hourlyRate       Float?
-  location         String?
-  headline         String?
-  website          String?
-  github           String?
-  linkedin         String?
-  verified         Boolean       @default(false)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  applications     Application[]
-  jobsPosted       Job[]         @relation("JobPoster")
-  receivedMessages Message[]     @relation("MessageReceiver")
-  sentMessages     Message[]     @relation("MessageSender")
-  payments         Payment[]
-  reviews          Review[]      @relation("ReviewReceiver")
-  givenReviews     Review[]      @relation("ReviewGiver")
-  languages        String[]      @default([])
-  education        Json?
-  experience       Json?
-  resumeUrl        String?
-  resumeTemplate   String?
-  notifications    Notification[]
-  paymentProvider  String?       // Payment provider: PAYPAL, CARD, KHQR
-  paymentProviderId String?      // Provider-specific customer/account ID
-  hasPaymentMethod Boolean       @default(false) // Whether user has connected payment method
-  sessions         Session[]
+  id                String         @id @default(cuid())
+  email             String         @unique
+  password          String
+  firstName         String
+  lastName          String
+  role              UserRole       @default(FREELANCER)
+  avatar            String?
+  bio               String?
+  skills            String[]
+  hourlyRate        Float?
+  location          String?
+  headline          String?
+  website           String?
+  github            String?
+  linkedin          String?
+  verified          Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  languages         String[]       @default([])
+  education         Json?
+  experience        Json?
+  resumeUrl         String?
+  resumeTemplate    String?
+  paymentProvider   String?
+  paymentProviderId String?
+  hasPaymentMethod  Boolean        @default(false)
+  applications      Application[]
+  jobsPosted        Job[]          @relation("JobPoster")
+  receivedMessages  Message[]      @relation("MessageReceiver")
+  sentMessages      Message[]      @relation("MessageSender")
+  notifications     Notification[]
+  payments          Payment[]
+  reviews           Review[]       @relation("ReviewReceiver")
+  givenReviews      Review[]       @relation("ReviewGiver")
+  sessions          Session[]
 
   @@map("users")
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
-  userAgent String?
-  ipAddress String?
-  isValid   Boolean  @default(true)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token        String   @unique // This is the refreshToken
+  accessToken  String?  @unique // New field for accessToken
+  userAgent    String?
+  ipAddress    String?
+  isValid      Boolean  @default(true)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
 
   @@index([userId])
   @@map("sessions")
 }
 
 model Job {
-  id           String        @id @default(cuid())
-  title        String
-  description  String
-  category     String
-  skills       String[]
-  budget       Float
-  budgetType   String
-  duration     String?
-  status       JobStatus     @default(DRAFT)
-  location     String?
-  remote       Boolean       @default(true)
-  aiMatchScore   Float?
-  aiTags         String[]
-  responsibilities String[]      @default([])
-  requirements     String[]      @default([])
-  posterId       String
-  companyName    String?
-  hiredFreelancerId String?      // ID of hired freelancer (when job is filled)
-  paymentRequired   Boolean      @default(true) // Whether payment is required to post
-  featured          Boolean      @default(false) // Whether job is promoted/featured
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  applications Application[]
-  poster       User          @relation("JobPoster", fields: [posterId], references: [id])
+  id                String        @id @default(cuid())
+  title             String
+  description       String
+  category          String
+  skills            String[]
+  budget            Float
+  budgetType        String
+  duration          String?
+  status            JobStatus     @default(DRAFT)
+  location          String?
+  remote            Boolean       @default(true)
+  aiMatchScore      Float?
+  aiTags            String[]
+  responsibilities  String[]      @default([])
+  requirements      String[]      @default([])
+  posterId          String
+  companyName       String?
+  hiredFreelancerId String?
+  paymentRequired   Boolean       @default(true)
+  featured          Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  applications      Application[]
+  poster            User          @relation("JobPoster", fields: [posterId], references: [id])
 
   @@index([posterId])
   @@index([status])
@@ -119,13 +120,13 @@ model Application {
 model Message {
   id         String   @id @default(cuid())
   content    String
-  type       String   @default("TEXT") // TEXT, IMAGE, FILE
+  type       String   @default("TEXT")
   fileUrl    String?
   read       Boolean  @default(false)
   senderId   String
   receiverId String
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
   receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
   sender     User     @relation("MessageSender", fields: [senderId], references: [id])
 
@@ -135,18 +136,18 @@ model Message {
 }
 
 model Payment {
-  id              String        @id @default(cuid())
-  amount          Float
-  currency        String        @default("usd")
-  status          PaymentStatus @default(PENDING)
-  provider        String        @default("CARD") // PAYPAL, CARD, KHQR
-  providerPaymentId String?     @unique // Provider-specific payment/transaction ID
-  paymentMethod   String?       // Card brand (visa/mastercard) or payment method details
-  userId          String
-  jobId           String?       // Optional: Link payment to specific job posting
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  user            User          @relation(fields: [userId], references: [id])
+  id                String        @id @default(cuid())
+  amount            Float
+  currency          String        @default("usd")
+  status            PaymentStatus @default(PENDING)
+  provider          String        @default("CARD")
+  providerPaymentId String?       @unique
+  paymentMethod     String?
+  userId            String
+  jobId             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  user              User          @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@map("payments")
@@ -171,41 +172,13 @@ model Notification {
   id        String   @id @default(cuid())
   userId    String
   message   String
-  type      String   @default("SYSTEM") // SYSTEM, JOB, PAYMENT, MESSAGE
+  type      String   @default("SYSTEM")
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("notifications")
-}
-
-enum UserRole {
-  FREELANCER
-  EMPLOYER
-  ADMIN
-}
-
-enum JobStatus {
-  DRAFT
-  OPEN
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-enum ApplicationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  WITHDRAWN
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
 }
 
 model PricingPlan {
@@ -228,10 +201,10 @@ model PricingPlan {
 model SalaryCategory {
   id        String       @id @default(cuid())
   name      String       @unique
-  roles     SalaryRole[]
   order     Int          @default(0)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+  roles     SalaryRole[]
 
   @@map("salary_categories")
 }
@@ -242,16 +215,16 @@ model SalaryRole {
   range      String
   experience String
   categoryId String
-  category   SalaryCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
+  category   SalaryCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@map("salary_roles")
 }
 
 model SalaryInsight {
   id          String   @id @default(cuid())
-  icon        String   // Lucide icon name
+  icon        String
   title       String
   description String
   color       String
@@ -265,7 +238,7 @@ model SalaryInsight {
 
 model HiringSolution {
   id          String   @id @default(cuid())
-  icon        String   // Lucide icon name
+  icon        String
   title       String
   description String
   features    String[]
@@ -282,7 +255,7 @@ model HiringStat {
   id        String   @id @default(cuid())
   label     String
   value     String
-  icon      String   // Lucide icon name
+  icon      String
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -358,4 +331,32 @@ model EmployerFAQ {
   updatedAt DateTime @updatedAt
 
   @@map("employer_faqs")
+}
+
+enum UserRole {
+  FREELANCER
+  EMPLOYER
+  ADMIN
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
 }

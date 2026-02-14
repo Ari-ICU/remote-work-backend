@@ -84,7 +84,8 @@ export class AuthController {
 
     return {
       user: userData,
-      // Tokens are now stored in HttpOnly cookies and database session
+      accessToken,
+      refreshToken
     };
   }
 
@@ -106,34 +107,47 @@ export class AuthController {
 
     return {
       user: userData,
-      // Tokens are now stored in HttpOnly cookies and database session
+      accessToken,
+      refreshToken
     };
   }
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
   async refresh(@Req() req, @Res({ passthrough: true }) res) {
-
-    const { refreshToken: bodyRefreshToken } = req.body || {};
+    const origin = req.headers.origin;
     const cookieRefreshToken = req.cookies['refresh_token'] || req.cookies['refreshToken'];
+    const { refreshToken: bodyRefreshToken } = req.body || {};
     const refreshToken = cookieRefreshToken || bodyRefreshToken;
 
+    console.log('[Auth Debug] Refresh attempt', {
+      origin,
+      hasCookie: !!cookieRefreshToken,
+      hasBody: !!bodyRefreshToken,
+      cookiesPresent: Object.keys(req.cookies || {}),
+    });
+
     if (!refreshToken) {
+      console.warn('[Auth Warning] No refresh token found in cookies or body');
       throw new UnauthorizedException('Refresh token not found');
     }
 
     try {
       const { accessToken, refreshToken: newRefreshToken, user } = await this.authService.refresh(refreshToken);
 
+      console.log('[Auth Debug] Refresh successful for user:', user?.email);
+
       // Always update cookies
       this.setAuthCookies(res, accessToken, newRefreshToken);
 
       return {
         success: true,
+        accessToken,
+        refreshToken: newRefreshToken,
         user
-        // Tokens are now in cookies
       };
     } catch (e) {
+      console.error('[Auth Error] Refresh failed:', e.message);
       // Clear all cookies if refresh fails
       res.clearCookie('token');
       res.clearCookie('refresh_token');
@@ -170,8 +184,7 @@ export class AuthController {
     this.setAuthCookies(res, accessToken, refreshToken);
 
     const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-    // No tokens in the URL - they are in HttpOnly cookies
-    const redirectUrl = `${frontendUrl}/auth/callback?user=${encodeURIComponent(JSON.stringify(userData))}`;
+    const redirectUrl = `${frontendUrl}/auth/callback?user=${encodeURIComponent(JSON.stringify(userData))}&accessToken=${accessToken}&refreshToken=${refreshToken}`;
 
     return res.redirect(redirectUrl);
   }
@@ -194,8 +207,7 @@ export class AuthController {
     this.setAuthCookies(res, accessToken, refreshToken);
 
     const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-    // No tokens in the URL - they are in HttpOnly cookies
-    const redirectUrl = `${frontendUrl}/auth/callback?user=${encodeURIComponent(JSON.stringify(userData))}`;
+    const redirectUrl = `${frontendUrl}/auth/callback?user=${encodeURIComponent(JSON.stringify(userData))}&accessToken=${accessToken}&refreshToken=${refreshToken}`;
 
     return res.redirect(redirectUrl);
   }

@@ -83,31 +83,59 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken);
+      console.log('[Auth Debug] AuthService.refresh called with token length:', refreshToken?.length);
+
+      let payload;
+      try {
+        payload = this.jwtService.verify(refreshToken);
+        console.log('[Auth Debug] JWT verified successfully for:', payload.email);
+      } catch (jwtError) {
+        console.error('[Auth Error] JWT verification failed:', jwtError.message);
+        throw new UnauthorizedException('Invalid refresh token signature or expired');
+      }
+
       const session = await this.prisma.session.findUnique({
         where: { token: refreshToken }
       });
 
-      if (!session || !session.isValid || session.expiresAt < new Date()) {
-        throw new UnauthorizedException('Invalid session');
+      if (!session) {
+        console.warn('[Auth Warning] Session not found in database for token');
+        throw new UnauthorizedException('Session not found');
+      }
+
+      if (!session.isValid) {
+        console.warn('[Auth Warning] Session is marked as invalid in database');
+        throw new UnauthorizedException('Session invalidated');
+      }
+
+      if (session.expiresAt < new Date()) {
+        console.warn('[Auth Warning] Session has expired in database');
+        throw new UnauthorizedException('Session expired');
       }
 
       const newPayload = { email: payload.email, sub: payload.sub, role: payload.role };
       const accessToken = this.jwtService.sign(newPayload, { expiresIn: '15m' });
       const newRefreshToken = this.jwtService.sign(newPayload, { expiresIn: '7d' });
 
-      // Rotate tokens - delete old, create new
-      await this.prisma.session.delete({ where: { id: session.id } });
-      await this.prisma.session.create({
-        data: {
-          userId: session.userId,
-          token: newRefreshToken,
-          accessToken: accessToken,
-          ipAddress: session.ipAddress,
-          userAgent: session.userAgent,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        }
-      });
+      console.log('[Auth Debug] Rotating session for user:', session.userId);
+
+      // Rotate tokens in a transaction or sequential operations
+      try {
+        await this.prisma.session.delete({ where: { id: session.id } });
+        await this.prisma.session.create({
+          data: {
+            userId: session.userId,
+            token: newRefreshToken,
+            accessToken: accessToken,
+            ipAddress: session.ipAddress,
+            userAgent: session.userAgent,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          }
+        });
+      } catch (dbError) {
+        console.error('[Auth Error] Database error during token rotation:', dbError.message);
+        throw new UnauthorizedException('Error during token rotation');
+      }
 
       // Fetch user data to return
       const user = await this.prisma.user.findUnique({
@@ -132,7 +160,8 @@ export class AuthService {
 
       return { accessToken, refreshToken: newRefreshToken, user };
     } catch (e) {
-      console.log(e);
+      if (e instanceof UnauthorizedException) throw e;
+      console.error('[Auth Error] Unexpected error in refresh:', e);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }

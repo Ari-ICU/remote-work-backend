@@ -13,8 +13,6 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
-@ApiTags('auth')
-@Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
@@ -27,6 +25,12 @@ export class AuthController {
     const req = res.req;
     const origin = req.headers.origin;
 
+    console.log('[Auth Debug] Setting cookies', {
+      isProduction,
+      origin,
+      nodeEnv: this.configService.get('NODE_ENV')
+    });
+
     // Cross-site requests (like Vercel to Localhost) REQUIRED SameSite: None and Secure: true
     // Note: Secure: true requires the backend to be on HTTPS (except for localhost in some browsers)
     const isCrossSite = origin && !origin.includes('localhost:3001') && !origin.includes('localhost:3000');
@@ -34,6 +38,12 @@ export class AuthController {
     // If we're in production OR the request is coming from a cross-site origin (like Vercel)
     const useSecure = isProduction || isCrossSite;
     const sameSite = isCrossSite || isProduction ? 'none' : 'lax';
+
+    console.log('[Auth Debug] Cookie Options:', {
+      isCrossSite,
+      useSecure,
+      sameSite
+    });
 
     const cookieOptions = {
       httpOnly: true,
@@ -116,7 +126,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh access token' })
   async refresh(@Req() req, @Res({ passthrough: true }) res) {
     const origin = req.headers.origin;
-    const cookieRefreshToken = req.cookies['refresh_token'] || req.cookies['refreshToken'];
+    const cookieRefreshToken = req?.cookies?.['refresh_token'] || req?.cookies?.['refreshToken'];
     const { refreshToken: bodyRefreshToken } = req.body || {};
     const refreshToken = cookieRefreshToken || bodyRefreshToken;
 
@@ -125,15 +135,17 @@ export class AuthController {
       hasCookie: !!cookieRefreshToken,
       hasBody: !!bodyRefreshToken,
       cookiesPresent: Object.keys(req.cookies || {}),
+      userAgent: req.headers['user-agent'],
     });
 
     if (!refreshToken) {
-      console.warn('[Auth Warning] No refresh token found in cookies or body');
+      console.warn('[Auth Warning] No refresh token found in cookies or body. Cookies keys:', Object.keys(req.cookies || {}));
       throw new UnauthorizedException('Refresh token not found');
     }
 
     try {
       const { accessToken, refreshToken: newRefreshToken, user } = await this.authService.refresh(refreshToken);
+
 
       console.log('[Auth Debug] Refresh successful for user:', user?.email);
 

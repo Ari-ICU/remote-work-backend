@@ -27,10 +27,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any, req: any) {
+  async validate(req: any, payload: any) {
     // Extract token again to check against DB
     let token = null;
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers?.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
     } else if (req.cookies) {

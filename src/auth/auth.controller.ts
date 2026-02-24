@@ -139,7 +139,10 @@ export class AuthController {
     });
 
     if (!refreshToken) {
-      console.warn('[Auth Warning] No refresh token found in cookies or body. Cookies keys:', Object.keys(req.cookies || {}));
+      console.warn('[Auth Warning] No refresh token found in cookies or body.', {
+        cookieKeys: Object.keys(req.cookies || {}),
+        hasBodyToken: !!bodyRefreshToken
+      });
       throw new UnauthorizedException('Refresh token not found');
     }
 

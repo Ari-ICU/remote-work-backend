@@ -113,29 +113,59 @@ export class AuthService {
         throw new UnauthorizedException('Session expired');
       }
 
-      const newPayload = { email: payload.email, sub: payload.sub, role: payload.role };
-      const accessToken = this.jwtService.sign(newPayload, { expiresIn: '15m' });
-      const newRefreshToken = this.jwtService.sign(newPayload, { expiresIn: '7d' });
-
       console.log('[Auth Debug] Rotating session for user:', session.userId);
 
-      // Rotate tokens in a transaction or sequential operations
-      try {
-        await this.prisma.session.delete({ where: { id: session.id } });
-        await this.prisma.session.create({
+      // Use a transaction to ensure atomicity and handle race conditions
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Re-verify session exists within transaction
+        const currentSession = await tx.session.findUnique({
+          where: { token: refreshToken }
+        });
+
+        if (!currentSession) {
+          // If not found, it might have been rotated by a concurrent request
+          return { error: 'Session not found', code: 'SESSION_MISSING' };
+        }
+
+        if (!currentSession.isValid) {
+          return { error: 'Session invalidated', code: 'SESSION_INVALID' };
+        }
+
+        const newPayload = { email: payload.email, sub: payload.sub, role: payload.role };
+        const newAccessToken = this.jwtService.sign(newPayload, { expiresIn: '15m' });
+        const newRefreshToken = this.jwtService.sign(newPayload, { expiresIn: '7d' });
+
+        // Delete old session and create new one
+        await tx.session.delete({ where: { id: currentSession.id } });
+        const createdSession = await tx.session.create({
           data: {
-            userId: session.userId,
+            userId: currentSession.userId,
             token: newRefreshToken,
-            accessToken: accessToken,
-            ipAddress: session.ipAddress,
-            userAgent: session.userAgent,
+            accessToken: newAccessToken,
+            ipAddress: currentSession.ipAddress,
+            userAgent: currentSession.userAgent,
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           }
         });
-      } catch (dbError) {
-        console.error('[Auth Error] Database error during token rotation:', dbError.message);
-        throw new UnauthorizedException('Error during token rotation');
+
+        return { accessToken: newAccessToken, refreshToken: newRefreshToken, userId: currentSession.userId };
+      });
+
+      if ('error' in result) {
+        console.warn(`[Auth Warning] Refresh restricted: ${result.error} (${result.code})`);
+
+        // Special case: if session is missing, check if a new one was just created for this user
+        if (result.code === 'SESSION_MISSING') {
+          // This is likely a race condition where another request already rotated the token
+          // We'll throw but with a more specific message that we can potentially handle
+          throw new UnauthorizedException('Session already rotated or missing');
+        }
+
+        throw new UnauthorizedException(result.error);
       }
+
+      const { accessToken, refreshToken: rotatedToken, userId } = result;
+      console.log('[Auth Debug] Rotating session successful for user:', userId);
 
       // Fetch user data to return
       const user = await this.prisma.user.findUnique({
@@ -158,7 +188,7 @@ export class AuthService {
         }
       });
 
-      return { accessToken, refreshToken: newRefreshToken, user };
+      return { accessToken, refreshToken: rotatedToken, user };
     } catch (e) {
       if (e instanceof UnauthorizedException) throw e;
       console.error('[Auth Error] Unexpected error in refresh:', e);

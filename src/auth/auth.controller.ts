@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UnauthorizedException, Get, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UnauthorizedException, Get, UseGuards, Req, Res, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
@@ -239,5 +239,42 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   getMe(@Req() req) {
     return this.usersService.findOne(req.user.id);
+  }
+
+  @Get('qr/generate')
+  @ApiOperation({ summary: 'Generate QR login session' })
+  async generateQr() {
+    return this.authService.generateQrSession();
+  }
+
+  @Post('qr/verify')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Verify QR login session (from phone)' })
+  async verifyQr(@Body('token') token: string, @Req() req) {
+    return this.authService.verifyQrSession(token, req.user.id);
+  }
+
+  @Get('qr/status')
+  @ApiOperation({ summary: 'Check QR login session status (polling)' })
+  async checkQrStatus(
+    @Query('token') token: string,
+    @Req() req: any,
+    @Res({ passthrough: true }) res: any
+  ) {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const ua = req.headers['user-agent'];
+    const result = await this.authService.checkQrSessionStatus(token, ip, ua);
+
+    if (result.status === 'verified' && (result as any).accessToken) {
+      this.setAuthCookies(res, (result as any).accessToken, (result as any).refreshToken);
+    }
+
+    return result;
+  }
+
+  @Post('qr/reject')
+  @ApiOperation({ summary: 'Reject QR login session' })
+  async rejectQr(@Body('token') token: string) {
+    return this.authService.rejectQrSession(token);
   }
 }

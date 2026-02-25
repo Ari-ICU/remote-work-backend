@@ -64,6 +64,17 @@ model Session {
   @@map("sessions")
 }
 
+model QrSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String?
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("qr_sessions")
+}
+
 model Job {
   id                String        @id @default(cuid())
   title             String

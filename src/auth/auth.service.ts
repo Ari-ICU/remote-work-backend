@@ -239,4 +239,64 @@ export class AuthService {
 
     return user;
   }
+
+  async generateQrSession() {
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    return this.prisma.qrSession.create({
+      data: {
+        token,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 mins
+      }
+    });
+  }
+
+  async verifyQrSession(token: string, userId: string) {
+    const qrSession = await this.prisma.qrSession.findUnique({
+      where: { token }
+    });
+
+    if (!qrSession || qrSession.isUsed || qrSession.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired QR session');
+    }
+
+    return this.prisma.qrSession.update({
+      where: { id: qrSession.id },
+      data: {
+        userId,
+        isUsed: true
+      }
+    });
+  }
+
+  async checkQrSessionStatus(token: string, ip?: string, ua?: string) {
+    const qrSession = await this.prisma.qrSession.findUnique({
+      where: { token }
+    });
+
+    if (!qrSession) return { status: 'invalid' };
+    if (qrSession.expiresAt < new Date()) return { status: 'expired' };
+
+    if (qrSession.isUsed && qrSession.userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: qrSession.userId } });
+      if (!user) return { status: 'invalid' };
+
+      const loginData = await this.login(user, ip, ua);
+      await this.prisma.qrSession.delete({ where: { id: qrSession.id } }).catch(() => { }); // Ignore errors if already deleted
+
+      return { status: 'verified', ...loginData };
+    }
+
+    return { status: 'pending' };
+  }
+
+  async rejectQrSession(token: string) {
+    const qrSession = await this.prisma.qrSession.findUnique({
+      where: { token }
+    });
+
+    if (qrSession) {
+      await this.prisma.qrSession.delete({ where: { id: qrSession.id } });
+    }
+    return { success: true };
+  }
 }

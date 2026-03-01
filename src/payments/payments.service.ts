@@ -1,5 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import * as QRCode from 'qrcode';
+
+// Using require for bakong-khqr as it might not have proper TypeScript types or ESM exports
+const { BakongKHQR, IndividualInfo, khqrData } = require('bakong-khqr');
 
 export enum PaymentProvider {
     PAYPAL = 'PAYPAL',
@@ -9,12 +14,19 @@ export enum PaymentProvider {
 
 @Injectable()
 export class PaymentsService {
-    constructor(private prisma: PrismaService) { }
+    private bakongKHQR: any;
+
+    constructor(
+        private prisma: PrismaService,
+        private configService: ConfigService
+    ) {
+        this.bakongKHQR = new BakongKHQR();
+    }
 
     async createPaymentIntent(data: any) {
         const { amount, currency = 'usd', provider = PaymentProvider.CARD } = data;
 
-        // Generate mock payment intent based on provider
+        // Generate payment intent based on provider
         let paymentIntent: any = {
             amount,
             currency,
@@ -33,9 +45,12 @@ export class PaymentsService {
                 break;
 
             case PaymentProvider.KHQR:
-                // Generate KHQR code (mock)
-                paymentIntent.qrCode = this.generateKHQRCode(amount, currency);
-                paymentIntent.qrCodeUrl = `data:image/svg+xml;base64,${Buffer.from(this.generateQRSVG(paymentIntent.qrCode)).toString('base64')}`;
+                // Generate real Bakong KHQR code
+                const khqrString = await this.generateKHQRString(amount, currency);
+                paymentIntent.qrCode = khqrString;
+                paymentIntent.qrCodeUrl = await this.generateQRDataURL(khqrString);
+                const individualInfo = await this.getIndividualInfo(amount, currency);
+                paymentIntent.md5 = this.bakongKHQR.generateIndividual(individualInfo).data.md5;
                 break;
 
             default:
@@ -148,22 +163,57 @@ export class PaymentsService {
         return updatedPayment;
     }
 
-    // Helper function to generate KHQR code (simplified)
-    private generateKHQRCode(amount: number, currency: string): string {
-        // KHQR format: merchant_id|amount|currency|reference
-        const merchantId = 'MERCHANT_123456';
-        const reference = 'REF_' + Date.now();
-        return `${merchantId}|${amount}|${currency.toUpperCase()}|${reference}`;
+    private async getIndividualInfo(amount: number, currency: string) {
+        // Try to get settings from database first
+        const settings = await this.prisma.systemSetting.findMany({
+            where: {
+                key: {
+                    in: ['BAKONG_ACCOUNT_ID', 'BAKONG_MERCHANT_NAME', 'BAKONG_MERCHANT_CITY']
+                }
+            }
+        });
+
+        const settingsMap = settings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as any);
+
+        const bakongAccountId = settingsMap['BAKONG_ACCOUNT_ID'] || this.configService.get('BAKONG_ACCOUNT_ID');
+        const merchantName = settingsMap['BAKONG_MERCHANT_NAME'] || this.configService.get('BAKONG_MERCHANT_NAME');
+        const merchantCity = settingsMap['BAKONG_MERCHANT_CITY'] || this.configService.get('BAKONG_MERCHANT_CITY');
+
+        const khqrCurrency = currency.toLowerCase() === 'khr' ? khqrData.currency.khr : khqrData.currency.usd;
+
+        return new IndividualInfo(
+            bakongAccountId,
+            merchantName,
+            merchantCity,
+            {
+                amount: amount,
+                currency: khqrCurrency,
+                billNumber: 'BILL' + Date.now(),
+                storeLabel: 'Freelance Platform',
+                expirationTimestamp: Date.now() + 600000, // 10 minutes from now in milliseconds (13 digits)
+                merchantCategoryCode: '5999' // Miscellaneous Fixed Retail
+            }
+        );
     }
 
-    // Helper function to generate QR code SVG
-    private generateQRSVG(data: string): string {
-        // Simple SVG QR code representation (in production, use a proper QR library)
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-            <rect width="200" height="200" fill="white"/>
-            <text x="100" y="100" text-anchor="middle" font-size="12" fill="black">
-                KHQR: ${data.substring(0, 20)}...
-            </text>
-        </svg>`;
+    // Helper function to generate real KHQR string
+    private async generateKHQRString(amount: number, currency: string): Promise<string> {
+        const individualInfo = await this.getIndividualInfo(amount, currency);
+        const result = this.bakongKHQR.generateIndividual(individualInfo);
+
+        if (result.status && result.status.code !== 0) {
+            throw new BadRequestException('Failed to generate KHQR: ' + result.status.message);
+        }
+
+        return result.data.qr;
+    }
+
+    // Helper function to generate QR code Data URL (image)
+    private async generateQRDataURL(text: string): Promise<string> {
+        try {
+            return await QRCode.toDataURL(text);
+        } catch (error) {
+            throw new BadRequestException('Failed to generate QR image');
+        }
     }
 }

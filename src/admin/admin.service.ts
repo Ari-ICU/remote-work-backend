@@ -470,18 +470,33 @@ export class AdminService {
     }
 
     async getPlatformSettings() {
+        const settings = await this.prisma.systemSetting.findMany();
+        const settingsMap = settings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as any);
+
         return {
-            stripeKey: process.env.STRIPE_SECRET_KEY || 'sk_test_••••••••',
-            openaiKey: process.env.OPENAI_API_KEY || 'sk_test_••••••••',
-            paymentAccount: process.env.PAYMENT_ACCOUNT_ID || 'acct_default',
+            stripeKey: settingsMap['STRIPE_SECRET_KEY'] || process.env.STRIPE_SECRET_KEY || 'sk_test_••••••••',
+            openaiKey: settingsMap['OPENAI_API_KEY'] || process.env.OPENAI_API_KEY || 'sk_test_••••••••',
+            bakongAccountId: settingsMap['BAKONG_ACCOUNT_ID'] || process.env.BAKONG_ACCOUNT_ID || 'your_bakong_id@abaa',
+            bakongMerchantName: settingsMap['BAKONG_MERCHANT_NAME'] || process.env.BAKONG_MERCHANT_NAME || 'Freelance Platform',
+            bakongMerchantCity: settingsMap['BAKONG_MERCHANT_CITY'] || process.env.BAKONG_MERCHANT_CITY || 'Phnom Penh',
             environment: process.env.NODE_ENV || 'development'
         };
     }
 
     async updatePlatformSettings(data: any) {
-        // In a real production app, you would save these to a database or AWS Secrets Manager.
-        // For this implementation, we will mock the update and provide instructions in the UI.
-        console.log('Update platform settings requested:', data);
-        return { success: true, message: 'Settings updated' };
+        const keys = Object.keys(data);
+
+        await Promise.all(keys.map(key => {
+            // Map camelCase from UI to UPPER_SNAKE_CASE for DB/ENV consistency
+            const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).toUpperCase();
+
+            return this.prisma.systemSetting.upsert({
+                where: { key: dbKey },
+                update: { value: String(data[key]) },
+                create: { key: dbKey, value: String(data[key]) }
+            });
+        }));
+
+        return { success: true, message: 'Settings updated successfully' };
     }
 }

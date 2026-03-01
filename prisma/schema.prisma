@@ -344,6 +344,16 @@ model EmployerFAQ {
   @@map("employer_faqs")
 }
 
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
 enum UserRole {
   FREELANCER
   EMPLOYER
